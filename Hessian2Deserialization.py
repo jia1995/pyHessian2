@@ -44,8 +44,9 @@ class Deserialization2Hessian:
                     re.append(self.__getString__())
                 elif code==0x43:
                     re.append(self.__getClass__())
-                elif code==0x4f or 0x60<code<=0x6f:
-                    re.append(self.__getObject__())
+                elif code==0x4f or 0x60<=code<=0x6f:
+                    re.append(self.__getObject__(size))
+                    size=0
                 elif 0x55<=code<=0x58 or 0x70<=code<=0x7f:
                     re.append(self.__getList__())
                 elif code==0x48 or code==0x4d:
@@ -61,7 +62,7 @@ class Deserialization2Hessian:
                 elif code==0x54:
                     re.append(True)
                     self.pos+=1
-                elif code==0x60 or code==0x50 or code==0x45 or code==0x47:
+                elif code==0x50 or code==0x45 or code==0x47:
                     self.pos+=1
                 else:
                     re.append(self.__getRef__())
@@ -70,9 +71,10 @@ class Deserialization2Hessian:
                 else:
                     return re if len(re)>1 else re[0]
         if gsize==0:
-            return re[0] if len(re)==1 else re
+            return re[0] if len(re)==1 and isinstance(re[0], list) else re
         v = []
-        while gsize>0:
+        xd = gsize
+        while gsize:
             if self.pos<self.len:
                 code = self.bstr[self.pos]
                 if (code >= 0x80 and code <= 0xbf) or (code >= 0xc0 and code <= 0xcf) or (code >= 0xd0 and code <= 0xd7) or code == 0x49: 
@@ -101,12 +103,13 @@ class Deserialization2Hessian:
                     x = self.__getClass__()
                     v.append(x)
                     gsize-=1
-                elif code==0x4f or 0x60<code<=0x6f:
-                    gsize-=1
-                    v.append(self.__getObject__())
+                elif code==0x4f or 0x60<=code<=0x6f:
+                    o = self.__getObject__(gsize)
+                    v.extend(o)
+                    gsize-=len(o)
                 elif 0x55<=code<=0x58 or 0x70<=code<=0x7f:
-                    gsize-=1
                     v.append(self.__getList__())
+                    gsize-=1
                 elif code==0x48 or code==0x4d:
                     gsize-=1
                     v.append(self.__getMap__())
@@ -125,15 +128,16 @@ class Deserialization2Hessian:
                     gsize-=1
                     v.append(True)
                     self.pos+=1
-                elif  code==0x50 or code==0x45 or code==0x47 or code==0x60:
-                    gsize-=1
+                elif  code==0x50 or code==0x45 or code==0x47:
+                    # gsize-=1
                     self.pos+=1
                 else:
                     gsize-=1
                     v.append(self.__getRef__())
-            if self.pos==self.len:
-                break
         res = {}
+        print(re, v)
+        while len(re)!=len(v):
+            v = v.pop()
         # print(re, v)
         l1,l2 = len(re), len(v)
         for k,v1 in zip(re, v):
@@ -370,27 +374,17 @@ class Deserialization2Hessian:
             re = re if len(re)>1 else re[0]
         return re
 
-    def __getObject__(self):
+    def __getObject__(self, length=0):
         code = self.bstr[self.pos]
         self.pos+=1
-        re = []
         if code==0x4f:
             length = self.bstr[self.pos]-0x90
             self.pos+=1
             return self.__decoder__(gsize=0, size=length)
         elif code>=0x60 and code<=0x6f:
-            while code>=0x60 and code<=0x6f:
-                length = code-0x60
-                d = self.__decoder__(size=length, gsize=0)
-                re.append(d)
-                if self.pos<self.len:
-                    code = self.bstr[self.pos]
-                    self.pos+=1
-                if self.pos==self.len:
-                    return re if len(re)>1 else re[0]
-            else:
-                self.pos-=1
-                return re if len(re)>1 else re[0]
+            re=self.__decoder__(size=length, gsize=0)
+            return re[0] if len(re)==1 and isinstance(re[0], list) else re
+            
     
     def __addRef__(self, obj):
         self.refMap[self.refId] = obj

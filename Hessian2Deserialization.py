@@ -8,6 +8,7 @@ class Deserialization2Hessian:
         self.types = []
         self.refMap = {}
         self.refId= 0
+        self.isLastChunk = True
 
     def decoder(self, bstr:str):
         if isinstance(bstr, str):
@@ -26,8 +27,7 @@ class Deserialization2Hessian:
             if self.pos<self.len:
                 code = self.bstr[self.pos]
                 if (code >= 0x80 and code <= 0xbf) or (code >= 0xc0 and code <= 0xcf) or (code >= 0xd0 and code <= 0xd7) or code == 0x49:
-                    size = self.__getInt__()
-                    re.append(size)
+                    re.append(self.__getInt__())
                 elif ( 0xd8 <= code <= 0xff)or ( 0x38 <= code <= 0x3f) or (code == 0x59) or (code == 0x4c):
                     l = self.__getLong__()
                     re.append(l)
@@ -70,57 +70,71 @@ class Deserialization2Hessian:
                 else:
                     return re if len(re)>1 else re[0]
         if gsize==0:
-            return re if len(re)>1 else re[0]
+            return re[0] if len(re)==1 else re
         v = []
         while gsize>0:
             if self.pos<self.len:
                 code = self.bstr[self.pos]
-                if (code >= 0x80 and code <= 0xbf) or (code >= 0xc0 and code <= 0xcf) or (code >= 0xd0 and code <= 0xd7) or code == 0x49:
-                    size = self.__getInt__()
-                    v.append(size)
+                if (code >= 0x80 and code <= 0xbf) or (code >= 0xc0 and code <= 0xcf) or (code >= 0xd0 and code <= 0xd7) or code == 0x49: 
+                    v.append(self.__getInt__())
+                    gsize-=1
                 elif ( 0xd8 <= code <= 0xff)or ( 0x38 <= code <= 0x3f) or (code == 0x59) or (code == 0x4c):
                     l = self.__getLong__()
                     v.append(l)
+                    gsize-=1
                 elif code==0x44 or (0x5b<=code<=0x5f):
                     v.append(self.__getDouble__())
+                    gsize-=1
                 elif code in (0x4a, 0x4b):
                     v.append(self.__getDate__())
+                    gsize-=1
                 elif (code >= 0x20 and code <= 0x2f) or (code == 0x41) or (code == 0x42) or (code >= 0x34 and code <= 0x37):
                     v.append( self.__getBytes__())
+                    gsize-=1
                 elif code in (0x00, 0x01, 0x02, 0x03,0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 
                         0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,0x10, 0x11, 0x12, 0x13, 
                         0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 
                         0x1e, 0x1f,0x30, 0x31, 0x32, 0x33,0x53,0x52):
                     v.append(self.__getString__())
+                    gsize-=1
                 elif code==0x43:
                     x = self.__getClass__()
                     v.append(x)
+                    gsize-=1
                 elif code==0x4f or 0x60<code<=0x6f:
+                    gsize-=1
                     v.append(self.__getObject__())
                 elif 0x55<=code<=0x58 or 0x70<=code<=0x7f:
+                    gsize-=1
                     v.append(self.__getList__())
                 elif code==0x48 or code==0x4d:
+                    gsize-=1
                     v.append(self.__getMap__())
                 elif code==0x5a:
+                    gsize-=1
                     self.pos+=1
                 elif code==0x4e:
+                    gsize-=1
                     v.append(None)
                     self.pos+=1
                 elif code==0x46:
+                    gsize-=1
                     v.append(False)
                     self.pos+=1
                 elif code==0x54:
+                    gsize-=1
                     v.append(True)
                     self.pos+=1
                 elif  code==0x50 or code==0x45 or code==0x47 or code==0x60:
+                    gsize-=1
                     self.pos+=1
                 else:
-                    v.append(self.__getRef__())
-                if self.pos<self.len and len(v)!=0:
                     gsize-=1
+                    v.append(self.__getRef__())
             if self.pos==self.len:
                 break
         res = {}
+        # print(re, v)
         l1,l2 = len(re), len(v)
         for k,v1 in zip(re, v):
             res[k] = v1
@@ -214,13 +228,14 @@ class Deserialization2Hessian:
                 re<<=8
                 re+=self.bstr[self.pos]
                 self.pos+=1
-            return datetime.datetime.strftime(datetime.datetime.fromtimestamp(re),'%Y-%m-%d %H:%M:%S')
+            # print(re)
+            return datetime.datetime.strftime(datetime.datetime.fromtimestamp(re/1000),'%Y-%m-%d %H:%M:%S')
         if (code == 0x4b):
             for i in range(4):
                 re<<=8
                 re+=self.bstr[self.pos]
                 self.pos+=1
-            return datetime.datetime.strftime(datetime.datetime.fromtimestamp(re* 60000),'%Y-%m-%d %H:%M:%S')
+            return datetime.datetime.strftime(datetime.datetime.fromtimestamp(re* 60),'%Y-%m-%d %H:%M:%S')
 
     def __getBytes__(self):
         code = self.bstr[self.pos]
@@ -263,6 +278,13 @@ class Deserialization2Hessian:
             self.pos+=length
         return bufs
 
+    def __bin2Str__(self, bstr):
+        try:
+            re = str(bstr, encoding='utf8')
+        except Exception:
+            return None
+        return re
+
     def __getString__(self):
         str1 = ''
         code = self.bstr[self.pos]
@@ -273,14 +295,22 @@ class Deserialization2Hessian:
                     0x1e, 0x1f]:
             self.isLastChunk = True
             length = code - 0x00
-            str1 += str(self.bstr[self.pos:self.pos+length], encoding='utf8')
+            t = self.__bin2Str__(self.bstr[self.pos:self.pos+length])
+            if not t or len(t)!=length:
+                length *= 3
+                t = self.__bin2Str__(self.bstr[self.pos:self.pos+length])
+            str1 += t
             self.pos+=length
         elif code in [0x30, 0x31, 0x32, 0x33]:
             self._isLastChunk = True
             b1 = self.bstr[self.pos]
             self.pos+=1
             length = (code - 0x30) * 256 + b1
-            str1 += str(self.bstr[self.pos:self.pos+length], encoding='utf8')
+            t = self.__bin2Str__(self.bstr[self.pos:self.pos+length])
+            if not t or len(t)!=length:
+                length *= 3
+                t = self.__bin2Str__(self.bstr[self.pos:self.pos+length])
+            str1 += t
             self.pos+=length
         elif code == 0x53:
             self._isLastChunk = True
@@ -289,7 +319,11 @@ class Deserialization2Hessian:
                 length<<=8
                 length += self.bstr[self.pos]
                 self.pos+=1
-            str1 += str(self.bstr[self.pos:self.pos+length], encoding='utf8')
+            t = self.__bin2Str__(self.bstr[self.pos:self.pos+length])
+            if not t or len(t)!=length:
+                length *= 3
+                t = self.__bin2Str__(self.bstr[self.pos:self.pos+length])
+            str1 += t
             self.pos+=length
         elif code == 0x52:
             self._isLastChunk = False
@@ -298,7 +332,11 @@ class Deserialization2Hessian:
                 length<<=8
                 length += self.bstr[self.pos]
                 self.pos+=1
-            str1 += str(self.bstr[self.pos:self.pos+length], encoding='utf8')
+            t = self.__bin2Str__(self.bstr[self.pos:self.pos+length])
+            if not t or len(t)!=length:
+                length *= 3
+                t = self.__bin2Str__(self.bstr[self.pos:self.pos+length])
+            str1 += t
             self.pos+=length
             while not self._isLastChunk:
                 str1 += self.__getString__()
@@ -327,6 +365,7 @@ class Deserialization2Hessian:
         re = self.__decoder__(size, size)
         mt = sub(r'com\.caucho\.hessian\.io\..*Handle','', classes)
         if mt=='':
+            # print(re)
             re = list(re.values())
             re = re if len(re)>1 else re[0]
         return re
@@ -363,7 +402,7 @@ class Deserialization2Hessian:
         re = []
         list_ = []
         types = None
-        length = None
+        length = 0
         if code==0x55:
             types = self.__getType__()
         elif code==0x56:
@@ -375,6 +414,7 @@ class Deserialization2Hessian:
             length = code-0x70
         elif code>=0x78 and code<=0x7f:
             length = code-0x78
+        # print(length, self.pos)
         return self.__decoder__(size=length, gsize=0)
 
     def __getMapData__(self, maps={}):
@@ -414,5 +454,10 @@ if __name__=='__main__':
     # print(str1)
     # print(str1.count(b'D'))
     d = Deserialization2Hessian()
-    print(d.decoder(str1))
+    # print(d.decoder(str1))
+    # print(d.decoder(enc))
+    enc = 'QzAzY29tLmdlZWtwbHVzLmhlcGhhZXN0dXMud21zLmNvcmUubW9jay5XbXNNb2NrUmVzdWx0kgZyZXN1bHQEZGF0YWAHU1VDQ0VTUwR4aXhp'
+    # print(d.decoder(enc))
+    enc = 'QzAiY29tLmdlZWtwbHVzLmh5cGVycHVsc2UuSGVzc2lhbkR0b6ECcDECcDICcDMCcDQCcDUCcDYCcDcCcDgCcDkDcDEyA3AxMwNwMTYDcDE3A3AxMANwMTEDcDE0A3AxNWCRkeHhRD/xmZmgAAAAQzAhY29tLmNhdWNoby5oZXNzaWFuLmlvLkZsb2F0SGFuZGxlkQZfdmFsdWVhRD/xmZmgAAAAXwAABExfAAAETAR4aXhpVFRDMCBjb20uY2F1Y2hvLmhlc3NpYW4uaW8uQnl0ZUhhbmRsZZEGX3ZhbHVlYpGRchpqYXZhLnV0aWwuQXJyYXlzJEFycmF5TGlzdAR4aXhpBGhhaGFyB1tzdHJpbmcEeGl4aQRoYWhhQzA1Y29tLmdvb2dsZS5jb21tb24uY29sbGVjdC5JbW11dGFibGVNYXAkU2VyaWFsaXplZEZvcm2SBGtleXMGdmFsdWVzY3IHW29iamVjdALlvKDkuIkC5p2O5ZubcpIC5YyX5LqsAuS4iua1t0oAAAF+nzt8QQ=='
+    print(base64.b64decode(enc))
     print(d.decoder(enc))

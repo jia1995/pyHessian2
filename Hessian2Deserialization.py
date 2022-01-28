@@ -3,6 +3,17 @@ import struct
 import base64
 from re import sub
 
+def mapTypeJudge(k, v):
+    if k!=['keys','values']:
+        return False
+    if len(set(map(len, v)))!=1:
+        return False
+    for i in v:
+        a = set(map(type, i))
+        if len(a)!=1:
+            return False
+    return True
+
 class Deserialization2Hessian:
     def __init__(self):
         self.types = []
@@ -17,7 +28,7 @@ class Deserialization2Hessian:
         self.len = len(bstr)
         self.pos = 0
         re = self.__decoder__()
-        return re
+        return re[0]
     
     def __decoder__(self, gsize=1, size=1):
         if self.pos==self.len:
@@ -45,7 +56,7 @@ class Deserialization2Hessian:
                 elif code==0x43:
                     re.append(self.__getClass__())
                 elif code==0x4f or 0x60<=code<=0x6f:
-                    re.append(self.__getObject__(size))
+                    re.extend(self.__getObject__(size))
                     size=0
                 elif 0x55<=code<=0x58 or 0x70<=code<=0x7f:
                     re.append(self.__getList__())
@@ -69,11 +80,10 @@ class Deserialization2Hessian:
                 if self.pos<self.len:
                     size-=1
                 else:
-                    return re if len(re)>1 else re[0]
+                    return re
         if gsize==0:
-            return re[0] if len(re)==1 and isinstance(re[0], list) else re
+            return re
         v = []
-        xd = gsize
         while gsize:
             if self.pos<self.len:
                 code = self.bstr[self.pos]
@@ -135,13 +145,12 @@ class Deserialization2Hessian:
                     gsize-=1
                     v.append(self.__getRef__())
         res = {}
-        print(re, v)
-        while len(re)!=len(v):
-            v = v.pop()
-        # print(re, v)
-        l1,l2 = len(re), len(v)
-        for k,v1 in zip(re, v):
-            res[k] = v1
+        if mapTypeJudge(re, v):
+            for a,b in zip(v[0],v[1]):
+                res[a] = b
+        else:
+            for k,v1 in zip(re, v):
+                res[k] = v1
         return res
 
     def __getInt__(self):
@@ -232,7 +241,6 @@ class Deserialization2Hessian:
                 re<<=8
                 re+=self.bstr[self.pos]
                 self.pos+=1
-            # print(re)
             return datetime.datetime.strftime(datetime.datetime.fromtimestamp(re/1000),'%Y-%m-%d %H:%M:%S')
         if (code == 0x4b):
             for i in range(4):
@@ -369,7 +377,6 @@ class Deserialization2Hessian:
         re = self.__decoder__(size, size)
         mt = sub(r'com\.caucho\.hessian\.io\..*Handle','', classes)
         if mt=='':
-            # print(re)
             re = list(re.values())
             re = re if len(re)>1 else re[0]
         return re
@@ -408,7 +415,6 @@ class Deserialization2Hessian:
             length = code-0x70
         elif code>=0x78 and code<=0x7f:
             length = code-0x78
-        # print(length, self.pos)
         return self.__decoder__(size=length, gsize=0)
 
     def __getMapData__(self, maps={}):
@@ -430,28 +436,25 @@ class Deserialization2Hessian:
         code = self.bstr[self.pos]
         self.pos+=1
         res = {}
-        self.__addRef__(res)
         if code==0x48: # untyped map ('H')
             self.__getMapData__(res)
         elif code == 0x4d: # map with type ('M')
             length = self.bstr[self.pos]-0x00
             self.pos+=1
-            types = self.__getType__()
-            self.__addRef__(res)
+            _ = self.__getType__()
             self.__getMapData__(res)
+        self.__addRef__(res)
         return res
 
 
 if __name__=='__main__':
     enc = 'QzAiY29tLmdlZWtwbHVzLmh5cGVycHVsc2UuSGVzc2lhbkR0b50CcDECcDICcDMCcDQCcDUCcDYCcDcCcDgCcDkDcDEyA3AxMwNwMTADcDExYJGR4eFEP/GZmaAAAABDMCFjb20uY2F1Y2hvLmhlc3NpYW4uaW8uRmxvYXRIYW5kbGWRBl92YWx1ZWFEP/GZmaAAAABfAAAETF8AAARMBHhpeGlUVHIaamF2YS51dGlsLkFycmF5cyRBcnJheUxpc3QEeGl4aQRoYWhhcgdbc3RyaW5nBHhpeGkEaGFoYQ=='
-    str1 = base64.b64decode(enc)
-    # print(str1)
-    # print(str1.count(b'D'))
-    d = Deserialization2Hessian()
-    # print(d.decoder(str1))
-    # print(d.decoder(enc))
+    bstr = base64.b64decode(enc)
+    deserialization2Hessian = Deserialization2Hessian()
+    # print(deserialization2Hessian.decoder(bstr))
+    print(deserialization2Hessian.decoder(enc))
     enc = 'QzAzY29tLmdlZWtwbHVzLmhlcGhhZXN0dXMud21zLmNvcmUubW9jay5XbXNNb2NrUmVzdWx0kgZyZXN1bHQEZGF0YWAHU1VDQ0VTUwR4aXhp'
-    # print(d.decoder(enc))
+    print(deserialization2Hessian.decoder(enc))
     enc = 'QzAiY29tLmdlZWtwbHVzLmh5cGVycHVsc2UuSGVzc2lhbkR0b6ECcDECcDICcDMCcDQCcDUCcDYCcDcCcDgCcDkDcDEyA3AxMwNwMTYDcDE3A3AxMANwMTEDcDE0A3AxNWCRkeHhRD/xmZmgAAAAQzAhY29tLmNhdWNoby5oZXNzaWFuLmlvLkZsb2F0SGFuZGxlkQZfdmFsdWVhRD/xmZmgAAAAXwAABExfAAAETAR4aXhpVFRDMCBjb20uY2F1Y2hvLmhlc3NpYW4uaW8uQnl0ZUhhbmRsZZEGX3ZhbHVlYpGRchpqYXZhLnV0aWwuQXJyYXlzJEFycmF5TGlzdAR4aXhpBGhhaGFyB1tzdHJpbmcEeGl4aQRoYWhhQzA1Y29tLmdvb2dsZS5jb21tb24uY29sbGVjdC5JbW11dGFibGVNYXAkU2VyaWFsaXplZEZvcm2SBGtleXMGdmFsdWVzY3IHW29iamVjdALlvKDkuIkC5p2O5ZubcpIC5YyX5LqsAuS4iua1t0oAAAF+nzt8QQ=='
-    print(base64.b64decode(enc))
-    print(d.decoder(enc))
+    # print(base64.b64decode(enc))
+    print(deserialization2Hessian.decoder(enc))

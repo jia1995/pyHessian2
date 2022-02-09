@@ -437,3 +437,9 @@ if __name__=='__main__':
     enc = 'QwpNeUxpbmtMaXN0kgFhBG5leHRgkVGQ' # circular test case
     deserialization2Hessian = Deserialization2Hessian()
     print(deserialization2Hessian.decoder(enc))
+    enc = 'Qxtjb20uZ2Vla3BsdXMuaGVwaGFlc3R1cy5DYXKTBWNvbG9yBW1vZGVsB21pbGVhZ2VgCmFxdWFtYXJpbmUGQmVldGxl1QAA'
+    deserialization2Hessian = Deserialization2Hessian()
+    print(deserialization2Hessian.decoder(enc))
+    enc = 'SKADZmllyQADZm9lkQNmZWVa'
+    deserialization2Hessian = Deserialization2Hessian()
+    json.dump(deserialization2Hessian.decoder(enc), open('a5.json','w'), indent=2,ensure_ascii=False)

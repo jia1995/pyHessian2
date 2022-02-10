@@ -104,8 +104,8 @@ class Deserialization2Hessian:
         if code == 0x5c:
             return 1.0
         if code == 0x5d:
-            c = self.__getCur__()
-            re = float(int(c)) if c<0x80 else c-0xff
+            c = float(self.__getCur__())
+            re = c if c<0x80 else c-0xff
             return re
         if code == 0x5e:
             re = self.__KthAdd__(2)

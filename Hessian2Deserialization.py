@@ -320,7 +320,10 @@ class Deserialization2Hessian:
         self.pos+=1
         classes=self.__decoder__()[0]
         size=self.__getInt__()
-        k = self.__decoder__(size)
+        k = []
+        for i in range(size):
+            x = self.__decoder__()
+            k.extend(x)
         self.classes.append({'name':classes, 'fields':k})
         v = self.__getObject__(pos==0)
         return v
@@ -342,7 +345,7 @@ class Deserialization2Hessian:
         for i in fields:
             da = self.__decoder__(withType=withType)
             re.extend(da)
-        return self.__generateClass__(classes, fields, re,res, idx)
+        return self.__generateClass__(classes, fields, re, res, idx)
             
     
     def __addRef__(self, obj):
@@ -370,19 +373,13 @@ class Deserialization2Hessian:
     def __getList__(self, withType=False):
         code = self.bstr[self.pos]
         self.pos+=1
-        re = []
-        types = None
         length = 0
-        
-        if code==0x55:
-            types = self.__getType__()
-        elif code==0x56:
-            types = self.__getType__()
-            length = self.__getInt__()
-        elif code==0x58:
+
+        if code==0x55 or code==0x56 or 0x70 <= code<=0x77:
+            _ = self.__getType__()
+        if code==0x56 or code==0x58:
             length = self.__getInt__()
         elif 0x70 <= code<=0x77:
-            types = self.__getType__()
             length = code-0x70
         elif 0x78 <= code<=0x7f:
             length = code-0x78
@@ -397,8 +394,8 @@ class Deserialization2Hessian:
     def __getMapData__(self, maps={}):
         code = self.bstr[self.pos]
         while code!=0x5a:
-            k = self.__decoder__(size=1)
-            v = self.__decoder__(size=1)
+            k = self.__decoder__()
+            v = self.__decoder__()
             maps[k[0]] = v[0]
             code = self.bstr[self.pos]
         self.pos+=1
@@ -406,7 +403,7 @@ class Deserialization2Hessian:
     def __getRef__(self):
         code = self.bstr[self.pos]
         self.pos +=1
-        lens = self.__decoder__(size=1)[0]
+        lens = self.__decoder__()[0]
         return self.refMap[lens]
 
     def __getMap__(self):
@@ -457,4 +454,5 @@ if __name__=='__main__':
     for i in f.readlines():
         enc = i
         deserialization2Hessian = Deserialization2Hessian()
-        print(deserialization2Hessian.decoder(enc))
+        res = deserialization2Hessian.decoder(enc)
+        print(res)

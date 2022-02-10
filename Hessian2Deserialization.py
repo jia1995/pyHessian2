@@ -378,12 +378,13 @@ class Deserialization2Hessian:
             types = self.__getType__()
         elif code==0x56:
             types = self.__getType__()
+            length = self.__getInt__()
         elif code==0x58:
             length = self.__getInt__()
-        elif code>=0x70 and code<=0x77:
+        elif 0x70 <= code<=0x77:
             types = self.__getType__()
             length = code-0x70
-        elif code>=0x78 and code<=0x7f:
+        elif 0x78 <= code<=0x7f:
             length = code-0x78
         if code==0x57 or code==0x55:
             re = self.__readUnTypedList__()
@@ -447,13 +448,13 @@ if __name__=='__main__':
     # enc = 'SKADZmllyQADZm9lkQNmZWVa'
     # deserialization2Hessian = Deserialization2Hessian()
     # json.dump(deserialization2Hessian.decoder(enc), open('a5.json','w'), indent=2,ensure_ascii=False)
-    # enc = 'WJmRSQAlJgeRkZGRkZGR'
-    # deserialization2Hessian = Deserialization2Hessian()
-    # print(base64.b64decode(enc))
-    # print(deserialization2Hessian.decoder(enc))
-    # json.dump(deserialization2Hessian.decoder(enc), open('a5.json','w'), indent=2,ensure_ascii=False)
-    f = open('test/test.txt')
-    for i in f.readlines():
-        enc = i
-        deserialization2Hessian = Deserialization2Hessian()
-        print(deserialization2Hessian.decoder(enc))
+    enc = 'Vgdbc3RyaW5nnAExATIBNAE1ATgBOQEwATQBMgE3ATgBMA=='
+    deserialization2Hessian = Deserialization2Hessian()
+    print(base64.b64decode(enc))
+    print(deserialization2Hessian.decoder(enc))
+    json.dump(deserialization2Hessian.decoder(enc), open('a5.json','w'), indent=2,ensure_ascii=False)
+    # f = open('test/test.txt')
+    # for i in f.readlines():
+    #     enc = i
+    #     deserialization2Hessian = Deserialization2Hessian()
+    #     print(deserialization2Hessian.decoder(enc))

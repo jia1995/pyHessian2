@@ -30,6 +30,8 @@ class Deserialization2Hessian:
         return re
     
     def __decoder__(self, withType=False):
+        if self.pos>=self.len:
+            return 
         code = self.__readCur__()
         if 0x80<=code<=0xbf or 0xc0<=code<=0xcf or 0xd0<=code<=0xd7 or code==0x49:
             return self.__getInt__()
@@ -61,11 +63,7 @@ class Deserialization2Hessian:
             return re
 
     def __KthAdd__(self, k):
-        re = 0
-        for _ in range(k):
-            re<<=8
-            re+=self.__getCur__()
-        return re
+        return int.from_bytes(self.__readKBin__(k), byteorder='big')
         
     def __getInt__(self):
         code = self.__getCur__()

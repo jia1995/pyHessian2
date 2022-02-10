@@ -91,6 +91,11 @@ class Deserialization2Hessian:
         elif code == 0x4c:
             return self.__KthAdd__(4)
 
+    def __readKBin__(self, k):
+        res = self.bstr[self.pos:self.pos+k]
+        self.pos+=k
+        return res
+
     def __getDouble__(self):
         code = self.__getCur__()
         if code == 0x5b:
@@ -98,13 +103,13 @@ class Deserialization2Hessian:
         elif code == 0x5c:
             return 1.0
         elif code == 0x5d:
-            return float(struct.unpack('>b', self.__KthAdd__(1))[0])
+            return float(struct.unpack('>b', self.__readKBin__(1))[0])
         elif code == 0x5e:
-            return float(struct.unpack('>h', self.__KthAdd__(2))[0])
+            return float(struct.unpack('>h', self.__readKBin__(2))[0])
         elif code == 0x5f:
-            return float(struct.unpack('>i', self.__KthAdd__(4))[0]*0.001)
+            return float(struct.unpack('>i', self.__readKBin__(4))[0]*0.001)
         else:
-            return float(struct.unpack('>d', self.__KthAdd__(8))[0])
+            return float(struct.unpack('>d', self.__readKBin__(8))[0])
 
     def __getDate__(self):
         code = self.__getCur__()

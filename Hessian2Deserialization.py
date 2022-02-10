@@ -93,27 +93,18 @@ class Deserialization2Hessian:
 
     def __getDouble__(self):
         code = self.__getCur__()
-        re = 0
-        if code == 0x44:
-            re = self.bstr[self.pos:self.pos+8][::-1]
-            self.pos+=8
-            re = struct.unpack('d', re)[0]
-            return re
         if code == 0x5b:
             return 0.0
-        if code == 0x5c:
+        elif code == 0x5c:
             return 1.0
-        if code == 0x5d:
-            c = float(self.__getCur__())
-            re = c if c<0x80 else c-0xff
-            return re
-        if code == 0x5e:
-            re = self.__KthAdd__(2)
-            return re if re<0x8000 else re-0xffff
-        if code == 0x5f:
-            re = self.__KthAdd__(4)
-            re = re if re<0x80000000 else re-0xffffffff
-            return re * 0.001
+        elif code == 0x5d:
+            return float(struct.unpack('>b', self.__KthAdd__(1))[0])
+        elif code == 0x5e:
+            return float(struct.unpack('>h', self.__KthAdd__(2))[0])
+        elif code == 0x5f:
+            return float(struct.unpack('>i', self.__KthAdd__(4))[0]*0.001)
+        else:
+            return float(struct.unpack('>d', self.__KthAdd__(8))[0])
 
     def __getDate__(self):
         code = self.__getCur__()

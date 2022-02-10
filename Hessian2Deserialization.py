@@ -85,18 +85,22 @@ class Deserialization2Hessian:
         self.pos+=1
         if 0x80 <= code <= 0xbf:
             return code - 0x90
-        if 0xc0 <= code <= 0xcf:
+        elif 0xc0 <= code <= 0xcf:
             self.pos+=1
             return ((code - 0xc8) << 8) + self.bstr[self.pos-1]
-        if 0xd0 <= code <= 0xd7:
+        elif 0xd0 <= code <= 0xd7:
             b1 = self.bstr[self.pos]
             self.pos+=1
             b0 = self.bstr[self.pos]
             self.pos+=1
             return ((code - 0xd4) << 16) + (b1 << 8) + b0
-        if code == 0x49:
-            self.pos+=1
-            return self.bstr[self.pos-1]
+        elif code == 0x49:
+            re = 0
+            for i in range(4):
+                re<<=8
+                re+=self.bstr[self.pos]
+                self.pos+=1
+            return re
     
     def __getLong__(self):
         code = self.bstr[self.pos]
@@ -442,4 +446,9 @@ if __name__=='__main__':
     print(deserialization2Hessian.decoder(enc))
     enc = 'SKADZmllyQADZm9lkQNmZWVa'
     deserialization2Hessian = Deserialization2Hessian()
+    json.dump(deserialization2Hessian.decoder(enc), open('a5.json','w'), indent=2,ensure_ascii=False)
+    enc = 'WJmRSQAlJgeRkZGRkZGR'
+    deserialization2Hessian = Deserialization2Hessian()
+    print(base64.b64decode(enc))
+    print(deserialization2Hessian.decoder(enc))
     json.dump(deserialization2Hessian.decoder(enc), open('a5.json','w'), indent=2,ensure_ascii=False)

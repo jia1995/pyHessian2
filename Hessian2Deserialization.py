@@ -129,8 +129,7 @@ class Deserialization2Hessian:
         # get non-final trunk start with 'A'
         while code == 0x41:
             length=self.__KthAdd__(2)
-            bufs+=self.bstr[self.pos:self.pos+length]
-            self.pos+=length
+            bufs+=self.__readKBin__(length)
             code = self.__getCur__()
         if code == 0x42: # get the last trunk start with 'B'
             length = self.__KthAdd__(2)
@@ -139,8 +138,7 @@ class Deserialization2Hessian:
         elif 0x34 <= code <= 0x37:
             b1 = self.__getCur__()
             length = (code - 0x34) * 256 + b1
-        bufs+=self.bstr[self.pos:self.pos+length]
-        self.pos+=length
+        bufs+=self.__readKBin__(length)
         return bufs
 
     def __bin2Str__(self, bstr):

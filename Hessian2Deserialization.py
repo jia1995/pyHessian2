@@ -74,9 +74,7 @@ class Deserialization2Hessian:
         elif 0xc0 <= code <= 0xcf:
             return ((code - 0xc8) << 8) + self.__getCur__()
         elif 0xd0 <= code <= 0xd7:
-            b1 = self.__getCur__()
-            b0 = self.__getCur__()
-            return ((code - 0xd4) << 16) + (b1 << 8) + b0
+            return ((code - 0xd4) << 16) + self.__KthAdd__(2)
         elif code == 0x49:
             return self.__KthAdd__(4)
     

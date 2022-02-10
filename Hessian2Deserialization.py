@@ -448,13 +448,13 @@ if __name__=='__main__':
     # enc = 'SKADZmllyQADZm9lkQNmZWVa'
     # deserialization2Hessian = Deserialization2Hessian()
     # json.dump(deserialization2Hessian.decoder(enc), open('a5.json','w'), indent=2,ensure_ascii=False)
-    enc = 'Vgdbc3RyaW5nnAExATIBNAE1ATgBOQEwATQBMgE3ATgBMA=='
-    deserialization2Hessian = Deserialization2Hessian()
-    print(base64.b64decode(enc))
-    print(deserialization2Hessian.decoder(enc))
-    json.dump(deserialization2Hessian.decoder(enc), open('a5.json','w'), indent=2,ensure_ascii=False)
-    # f = open('test/test.txt')
-    # for i in f.readlines():
-    #     enc = i
-    #     deserialization2Hessian = Deserialization2Hessian()
-    #     print(deserialization2Hessian.decoder(enc))
+    # enc = 'Vgdbc3RyaW5nnAExATIBNAE1ATgBOQEwATQBMgE3ATgBMA=='
+    # deserialization2Hessian = Deserialization2Hessian()
+    # print(base64.b64decode(enc))
+    # print(deserialization2Hessian.decoder(enc))
+    # json.dump(deserialization2Hessian.decoder(enc), open('a5.json','w'), indent=2,ensure_ascii=False)
+    f = open('test/test.txt')
+    for i in f.readlines():
+        enc = i
+        deserialization2Hessian = Deserialization2Hessian()
+        print(deserialization2Hessian.decoder(enc))

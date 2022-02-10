@@ -141,11 +141,19 @@ class Deserialization2Hessian:
         bufs+=self.__readKBin__(length)
         return bufs
 
-    def __bin2Str__(self, bstr):
-        try:
-            re = str(bstr, encoding='utf8')
-        except Exception:
-            return None
+    def __readString__(self, length):
+        re = ''
+        for _ in range(length):
+            start = self.__readCur__()
+            if start - 0x80<0:
+                cur=self.__readKBin__(1)
+            elif start&0xe0 == 0xc0:
+                cur=self.__readKBin__(2)
+            elif start&0xf0 == 0xe0:
+                cur= self.__readKBin__(3)
+            elif start&0xf8 == 0xf0:
+                cur=self.__readKBin__(4)
+            re+= str(cur, 'utf8')
         return re
 
     def __getString__(self):
@@ -165,12 +173,7 @@ class Deserialization2Hessian:
         elif code == 0x52:
             self.isLastChunk = False
             length = self.__KthAdd__(2)
-        t = self.__bin2Str__(self.bstr[self.pos:self.pos+length])
-        if not t or len(t)!=length:
-            length *= 3
-            t = self.__bin2Str__(self.bstr[self.pos:self.pos+length])
-        str1 += t
-        self.pos+=length
+        str1 += self.__readString__(length)
         while not self.isLastChunk:
             str1 += self.__getString__()
         return str1
@@ -203,7 +206,7 @@ class Deserialization2Hessian:
     def __getClass__(self):
         pos = self.pos
         self.__getCur__()
-        classes=self.__decoder__()
+        classes=self.__getString__()
         size=self.__getInt__()
         k = [self.__decoder__() for _ in range(size)]
         self.classes.append({'name':classes, 'fields':k})

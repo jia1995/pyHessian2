@@ -424,31 +424,36 @@ class Deserialization2Hessian:
 
 
 if __name__=='__main__':
-    enc = 'QzAiY29tLmdlZWtwbHVzLmh5cGVycHVsc2UuSGVzc2lhbkR0b50CcDECcDICcDMCcDQCcDUCcDYCcDcCcDgCcDkDcDEyA3AxMwNwMTADcDExYJGR4eFEP/GZmaAAAABDMCFjb20uY2F1Y2hvLmhlc3NpYW4uaW8uRmxvYXRIYW5kbGWRBl92YWx1ZWFEP/GZmaAAAABfAAAETF8AAARMBHhpeGlUVHIaamF2YS51dGlsLkFycmF5cyRBcnJheUxpc3QEeGl4aQRoYWhhcgdbc3RyaW5nBHhpeGkEaGFoYQ=='
-    deserialization2Hessian = Deserialization2Hessian()
-    json.dump(deserialization2Hessian.decoder(enc), open('a1.json','w'), indent=2)
-    enc = 'QzAzY29tLmdlZWtwbHVzLmhlcGhhZXN0dXMud21zLmNvcmUubW9jay5XbXNNb2NrUmVzdWx0kgZyZXN1bHQEZGF0YWAHU1VDQ0VTUwR4aXhp'
-    deserialization2Hessian = Deserialization2Hessian()
-    json.dump(deserialization2Hessian.decoder(enc), open('a2.json','w'), indent=2)
-    enc = 'QzAiY29tLmdlZWtwbHVzLmh5cGVycHVsc2UuSGVzc2lhbkR0b6ECcDECcDICcDMCcDQCcDUCcDYCcDcCcDgCcDkDcDEyA3AxMwNwMTYDcDE3A3AxMANwMTEDcDE0A3AxNWCRkeHhRD/xmZmgAAAAQzAhY29tLmNhdWNoby5oZXNzaWFuLmlvLkZsb2F0SGFuZGxlkQZfdmFsdWVhRD/xmZmgAAAAXwAABExfAAAETAR4aXhpVFRDMCBjb20uY2F1Y2hvLmhlc3NpYW4uaW8uQnl0ZUhhbmRsZZEGX3ZhbHVlYpGRchpqYXZhLnV0aWwuQXJyYXlzJEFycmF5TGlzdAR4aXhpBGhhaGFyB1tzdHJpbmcEeGl4aQRoYWhhQzA1Y29tLmdvb2dsZS5jb21tb24uY29sbGVjdC5JbW11dGFibGVNYXAkU2VyaWFsaXplZEZvcm2SBGtleXMGdmFsdWVzY3IHW29iamVjdALlvKDkuIkC5p2O5ZubcpIC5YyX5LqsAuS4iua1t0oAAAF+nzt8QQ=='
-    deserialization2Hessian = Deserialization2Hessian()
-    json.dump(deserialization2Hessian.decoder(enc), open('a3.json','w'), indent=2,ensure_ascii=False)
-    enc = "QwR0ZW1wlgFhAWQBZgFsAW0CbTJgyIBfAXUgFEMwIWNvbS5jYXVjaG8uaGVzc2lhbi5pby5GbG9hdEhhbmRsZZEGX3ZhbHVlYURBFHmkYAAAAHQaamF2YS51dGlsLkFycmF5cyRBcnJheUxpc3SRkpSVQzA1Y29tLmdvb2dsZS5jb21tb24uY29sbGVjdC5JbW11dGFibGVNYXAkU2VyaWFsaXplZEZvcm2SBGtleXMGdmFsdWVzYnIHW29iamVjdANhZHMDZHNmcpFRknOQyDanyEFicZEDZHNjcZFRkw=='#'QwR0ZW1wlwFhAWQBZgFsAmwyAW0CbTJgyIBfAXUgFEMwIWNvbS5jYXVjaG8uaGVzc2lhbi5pby5GbG9hdEhhbmRsZZEGX3ZhbHVlYURBFHmkYAAAAHQaamF2YS51dGlsLkFycmF5cyRBcnJheUxpc3SRkpSVc5DINqfIQUMwNWNvbS5nb29nbGUuY29tbW9uLmNvbGxlY3QuSW1tdXRhYmxlTWFwJFNlcmlhbGl6ZWRGb3JtkgRrZXlzBnZhbHVlc2JyB1tvYmplY3QDYWRzA2RzZnKRUZJRk2JxkQNkc2NxkVGU"
-    deserialization2Hessian = Deserialization2Hessian()
-    json.dump(deserialization2Hessian.decoder(enc), open('a4.json','w'), indent=2,ensure_ascii=False)
-    enc = 'QzAiY29tLmdlZWtwbHVzLmhlcGhhZXN0dXMuSGVzc2lhbkR0b6UCcDECcDICcDMCcDQCcDUCcDYCcDcCcDgCcDkDcDEyA3AxMwNwMTYDcDE3A3AxOANwMTkDcDIwA3AxMANwMTEDcDE0A3AxNQNwMjFgkZHh4UQ/8ZmZoAAAAEMwIWNvbS5jYXVjaG8uaGVzc2lhbi5pby5GbG9hdEhhbmRsZZEGX3ZhbHVlYUQ/8ZmZoAAAAF8AAARMXwAABEwEeGl4aVRUQzAgY29tLmNhdWNoby5oZXNzaWFuLmlvLkJ5dGVIYW5kbGWRBl92YWx1ZWKRkdPzt17zUkTBSl9+gAAAAHIaamF2YS51dGlsLkFycmF5cyRBcnJheUxpc3QEeGl4aQRoYWhhcgdbc3RyaW5nBHhpeGkEaGFoYUMwNWNvbS5nb29nbGUuY29tbW9uLmNvbGxlY3QuSW1tdXRhYmxlTWFwJFNlcmlhbGl6ZWRGb3JtkgRrZXlzBnZhbHVlc2NyB1tvYmplY3QC5byg5LiJAuadjuWbm3KSAuWMl+S6rALkuIrmtbdKAAABftnHtHtjcpICNDUCMjNyklGVUZU='
-    json.dump(deserialization2Hessian.decoder(enc), open('a4.json','w'), indent=2,ensure_ascii=False)
-    enc = 'QwpNeUxpbmtMaXN0kgFhBG5leHRgkVGQ' # circular test case
-    deserialization2Hessian = Deserialization2Hessian()
-    print(deserialization2Hessian.decoder(enc))
-    enc = 'Qxtjb20uZ2Vla3BsdXMuaGVwaGFlc3R1cy5DYXKTBWNvbG9yBW1vZGVsB21pbGVhZ2VgCmFxdWFtYXJpbmUGQmVldGxl1QAA'
-    deserialization2Hessian = Deserialization2Hessian()
-    print(deserialization2Hessian.decoder(enc))
-    enc = 'SKADZmllyQADZm9lkQNmZWVa'
-    deserialization2Hessian = Deserialization2Hessian()
-    json.dump(deserialization2Hessian.decoder(enc), open('a5.json','w'), indent=2,ensure_ascii=False)
-    enc = 'WJmRSQAlJgeRkZGRkZGR'
-    deserialization2Hessian = Deserialization2Hessian()
-    print(base64.b64decode(enc))
-    print(deserialization2Hessian.decoder(enc))
-    json.dump(deserialization2Hessian.decoder(enc), open('a5.json','w'), indent=2,ensure_ascii=False)
+    # enc = 'QzAiY29tLmdlZWtwbHVzLmh5cGVycHVsc2UuSGVzc2lhbkR0b50CcDECcDICcDMCcDQCcDUCcDYCcDcCcDgCcDkDcDEyA3AxMwNwMTADcDExYJGR4eFEP/GZmaAAAABDMCFjb20uY2F1Y2hvLmhlc3NpYW4uaW8uRmxvYXRIYW5kbGWRBl92YWx1ZWFEP/GZmaAAAABfAAAETF8AAARMBHhpeGlUVHIaamF2YS51dGlsLkFycmF5cyRBcnJheUxpc3QEeGl4aQRoYWhhcgdbc3RyaW5nBHhpeGkEaGFoYQ=='
+    # deserialization2Hessian = Deserialization2Hessian()
+    # json.dump(deserialization2Hessian.decoder(enc), open('a1.json','w'), indent=2)
+    # enc = 'QzAzY29tLmdlZWtwbHVzLmhlcGhhZXN0dXMud21zLmNvcmUubW9jay5XbXNNb2NrUmVzdWx0kgZyZXN1bHQEZGF0YWAHU1VDQ0VTUwR4aXhp'
+    # deserialization2Hessian = Deserialization2Hessian()
+    # json.dump(deserialization2Hessian.decoder(enc), open('a2.json','w'), indent=2)
+    # enc = 'QzAiY29tLmdlZWtwbHVzLmh5cGVycHVsc2UuSGVzc2lhbkR0b6ECcDECcDICcDMCcDQCcDUCcDYCcDcCcDgCcDkDcDEyA3AxMwNwMTYDcDE3A3AxMANwMTEDcDE0A3AxNWCRkeHhRD/xmZmgAAAAQzAhY29tLmNhdWNoby5oZXNzaWFuLmlvLkZsb2F0SGFuZGxlkQZfdmFsdWVhRD/xmZmgAAAAXwAABExfAAAETAR4aXhpVFRDMCBjb20uY2F1Y2hvLmhlc3NpYW4uaW8uQnl0ZUhhbmRsZZEGX3ZhbHVlYpGRchpqYXZhLnV0aWwuQXJyYXlzJEFycmF5TGlzdAR4aXhpBGhhaGFyB1tzdHJpbmcEeGl4aQRoYWhhQzA1Y29tLmdvb2dsZS5jb21tb24uY29sbGVjdC5JbW11dGFibGVNYXAkU2VyaWFsaXplZEZvcm2SBGtleXMGdmFsdWVzY3IHW29iamVjdALlvKDkuIkC5p2O5ZubcpIC5YyX5LqsAuS4iua1t0oAAAF+nzt8QQ=='
+    # deserialization2Hessian = Deserialization2Hessian()
+    # json.dump(deserialization2Hessian.decoder(enc), open('a3.json','w'), indent=2,ensure_ascii=False)
+    # enc = "QwR0ZW1wlgFhAWQBZgFsAW0CbTJgyIBfAXUgFEMwIWNvbS5jYXVjaG8uaGVzc2lhbi5pby5GbG9hdEhhbmRsZZEGX3ZhbHVlYURBFHmkYAAAAHQaamF2YS51dGlsLkFycmF5cyRBcnJheUxpc3SRkpSVQzA1Y29tLmdvb2dsZS5jb21tb24uY29sbGVjdC5JbW11dGFibGVNYXAkU2VyaWFsaXplZEZvcm2SBGtleXMGdmFsdWVzYnIHW29iamVjdANhZHMDZHNmcpFRknOQyDanyEFicZEDZHNjcZFRkw=='#'QwR0ZW1wlwFhAWQBZgFsAmwyAW0CbTJgyIBfAXUgFEMwIWNvbS5jYXVjaG8uaGVzc2lhbi5pby5GbG9hdEhhbmRsZZEGX3ZhbHVlYURBFHmkYAAAAHQaamF2YS51dGlsLkFycmF5cyRBcnJheUxpc3SRkpSVc5DINqfIQUMwNWNvbS5nb29nbGUuY29tbW9uLmNvbGxlY3QuSW1tdXRhYmxlTWFwJFNlcmlhbGl6ZWRGb3JtkgRrZXlzBnZhbHVlc2JyB1tvYmplY3QDYWRzA2RzZnKRUZJRk2JxkQNkc2NxkVGU"
+    # deserialization2Hessian = Deserialization2Hessian()
+    # json.dump(deserialization2Hessian.decoder(enc), open('a4.json','w'), indent=2,ensure_ascii=False)
+    # enc = 'QzAiY29tLmdlZWtwbHVzLmhlcGhhZXN0dXMuSGVzc2lhbkR0b6UCcDECcDICcDMCcDQCcDUCcDYCcDcCcDgCcDkDcDEyA3AxMwNwMTYDcDE3A3AxOANwMTkDcDIwA3AxMANwMTEDcDE0A3AxNQNwMjFgkZHh4UQ/8ZmZoAAAAEMwIWNvbS5jYXVjaG8uaGVzc2lhbi5pby5GbG9hdEhhbmRsZZEGX3ZhbHVlYUQ/8ZmZoAAAAF8AAARMXwAABEwEeGl4aVRUQzAgY29tLmNhdWNoby5oZXNzaWFuLmlvLkJ5dGVIYW5kbGWRBl92YWx1ZWKRkdPzt17zUkTBSl9+gAAAAHIaamF2YS51dGlsLkFycmF5cyRBcnJheUxpc3QEeGl4aQRoYWhhcgdbc3RyaW5nBHhpeGkEaGFoYUMwNWNvbS5nb29nbGUuY29tbW9uLmNvbGxlY3QuSW1tdXRhYmxlTWFwJFNlcmlhbGl6ZWRGb3JtkgRrZXlzBnZhbHVlc2NyB1tvYmplY3QC5byg5LiJAuadjuWbm3KSAuWMl+S6rALkuIrmtbdKAAABftnHtHtjcpICNDUCMjNyklGVUZU='
+    # json.dump(deserialization2Hessian.decoder(enc), open('a4.json','w'), indent=2,ensure_ascii=False)
+    # enc = 'QwpNeUxpbmtMaXN0kgFhBG5leHRgkVGQ' # circular test case
+    # deserialization2Hessian = Deserialization2Hessian()
+    # print(deserialization2Hessian.decoder(enc))
+    # enc = 'Qxtjb20uZ2Vla3BsdXMuaGVwaGFlc3R1cy5DYXKTBWNvbG9yBW1vZGVsB21pbGVhZ2VgCmFxdWFtYXJpbmUGQmVldGxl1QAA'
+    # deserialization2Hessian = Deserialization2Hessian()
+    # print(deserialization2Hessian.decoder(enc))
+    # enc = 'SKADZmllyQADZm9lkQNmZWVa'
+    # deserialization2Hessian = Deserialization2Hessian()
+    # json.dump(deserialization2Hessian.decoder(enc), open('a5.json','w'), indent=2,ensure_ascii=False)
+    # enc = 'WJmRSQAlJgeRkZGRkZGR'
+    # deserialization2Hessian = Deserialization2Hessian()
+    # print(base64.b64decode(enc))
+    # print(deserialization2Hessian.decoder(enc))
+    # json.dump(deserialization2Hessian.decoder(enc), open('a5.json','w'), indent=2,ensure_ascii=False)
+    f = open('test/test.txt')
+    for i in f.readlines():
+        enc = i
+        deserialization2Hessian = Deserialization2Hessian()
+        print(deserialization2Hessian.decoder(enc))

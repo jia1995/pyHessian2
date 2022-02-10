@@ -62,10 +62,17 @@ class Deserialization2Hessian:
             elif code==0x54: re = True
             return re
 
+    def __getNull__(self, withType=False):
+        self.__getCur__()
+        return None
+    
+    def __getBoolean__(self, withType=False):
+        return self.__getCur__()==0x54
+
     def __KthAdd__(self, k):
         return int.from_bytes(self.__readKBin__(k), byteorder='big')
         
-    def __getInt__(self):
+    def __getInt__(self, withType=False):
         code = self.__getCur__()
         if 0x80 <= code <= 0xbf:
             return code - 0x90
@@ -76,7 +83,7 @@ class Deserialization2Hessian:
         elif code == 0x49:
             return self.__KthAdd__(4)
     
-    def __getLong__(self):
+    def __getLong__(self, withType=False):
         code = self.__getCur__()
         if 0xd8 <= code <= 0xef:
             return int(code - 0xe0)
@@ -94,7 +101,7 @@ class Deserialization2Hessian:
         self.pos+=k
         return res
 
-    def __getDouble__(self):
+    def __getDouble__(self, withType=False):
         code = self.__getCur__()
         if code == 0x5b:
             return 0.0
@@ -109,7 +116,7 @@ class Deserialization2Hessian:
         else:
             return float(struct.unpack('>d', self.__readKBin__(8))[0])
 
-    def __getDate__(self):
+    def __getDate__(self, withType=False):
         code = self.__getCur__()
         re = 0
         if code == 0x4a:
@@ -119,7 +126,7 @@ class Deserialization2Hessian:
             re = self.__KthAdd__(4)
             return datetime.datetime.strftime(datetime.datetime.fromtimestamp(re* 60),'%Y-%m-%d %H:%M:%S.%f')
 
-    def __getBytes__(self):
+    def __getBytes__(self, withType=False):
         code = self.__getCur__()
         if 0x20 <= code <= 0x2f:
             lens = code - 0x20
@@ -156,7 +163,7 @@ class Deserialization2Hessian:
             re+= str(cur, 'utf8')
         return re
 
-    def __getString__(self):
+    def __getString__(self, withType=False):
         str1 = ''
         code = self.__getCur__()
         length=0
@@ -178,7 +185,7 @@ class Deserialization2Hessian:
             str1 += self.__getString__()
         return str1
 
-    def __getType__(self):
+    def __getType__(self, withType=False):
         code = self.__readCur__()
         if 0x00<=code <= 0x1f or 0x30<= code <= 0x33 or 0x52<=code<=0x53:
             types = self.__getString__()
@@ -203,7 +210,7 @@ class Deserialization2Hessian:
         re.update(dic)
         return res
 
-    def __getClass__(self):
+    def __getClass__(self, withType=False):
         pos = self.pos
         self.__getCur__()
         classes=self.__getString__()
@@ -264,12 +271,12 @@ class Deserialization2Hessian:
             maps[self.__decoder__()] = self.__decoder__()
         self.pos+=1
 
-    def __getRef__(self):
+    def __getRef__(self, withType=False):
         _ = self.__getCur__()
         lens = self.__decoder__()
         return self.refMap[lens]
 
-    def __getMap__(self):
+    def __getMap__(self, withType=False):
         code = self.__getCur__()
         res = {}
         if code==0x48: # untyped map ('H')

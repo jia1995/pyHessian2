@@ -20,7 +20,7 @@ def encoderFor(data_type):
 
 class Hessian2Output:
     def __init__(self) :
-        self.output = ''
+        self.output = b''
         self.types = []
         self.classDefs = []
         self.refs = []
@@ -33,7 +33,8 @@ class Hessian2Output:
 
     def __write(self, value) :
         if isinstance(value, int): value = chr(value)
-        self.output+= f'{value}'
+        if isinstance(value, str): value = bytes(value, 'utf8')
+        self.output+= value
 
     def __pack(self, formatStr, value) :
         self.__write(struct.pack(formatStr, value))
@@ -309,4 +310,4 @@ if __name__ == '__main__':
     str1 = {'a':1, 'b':325434657687, 'c':3134.1, 'd':[1,3,4,5,6],'e':{'但是':'发动机'}}
     ho = Hessian2Output()
     ho.writeObject(str1)
-    print(base64.b64encode(ho.output.encode('utf8')))
+    print(base64.b64encode(ho.output))

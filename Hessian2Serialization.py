@@ -33,7 +33,7 @@ class Hessian2Output:
 
     def __write(self, value) :
         if isinstance(value, int): value = chr(value)
-        if isinstance(value, str): value = bytes(value, 'utf8')
+        if isinstance(value, str): value = value.encode('ISO_8859_1')
         self.output+= value
 
     def __pack(self, formatStr, value) :
@@ -167,7 +167,7 @@ class Hessian2Output:
         while length > 65535 :
             self.__write(0x52)
             self.__pack('>H', 65535)
-            self.__write(value[:65535])
+            self.__write(value[:65535].encode('utf8'))
             value = value[65535:]
             length -= 65535
         
@@ -181,7 +181,7 @@ class Hessian2Output:
             self.__pack('>H', length)
         
         if length > 0 :
-            self.__write(value)
+            self.__write(value.encode('utf8'))
 
     def __addRef(self, value) :
         refId = 0

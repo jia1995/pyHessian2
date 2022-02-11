@@ -33,8 +33,7 @@ class Hessian2Output:
 
     def __write(self, value) :
         if isinstance(value, int): value = chr(value)
-        if isinstance(value, bytes): value = value.decode('ISO_8859_1')
-        self.output+= value
+        self.output+= f'{value}'
 
     def __pack(self, formatStr, value) :
         self.__write(struct.pack(formatStr, value))
@@ -307,7 +306,7 @@ class Hessian2Output:
             self.__mWriteObject(value.__dict__[fieldName])
             
 if __name__ == '__main__':
-    str1 = {'a':1, '':325434657687, 'c':3134.1, 'd':[1,3,4,5,6],'e':{'但是':'发动机'}}
+    str1 = {'a':1, 'b':325434657687, 'c':3134.1, 'd':[1,3,4,5,6],'e':{'但是':'发动机'}}
     ho = Hessian2Output()
     ho.writeObject(str1)
     print(base64.b64encode(ho.output.encode('utf8')))

@@ -32,7 +32,9 @@ class Hessian2Output:
         return len(self.output.getvalue())
 
     def __write(self, value) :
-        self.output+=bytes(value)
+        if isinstance(value, int): value = chr(value)
+        if isinstance(value, str): value = value.encode()
+        self.output+= value
 
     def __writeByte(self, value) :
         self.__write(value)
@@ -70,12 +72,15 @@ class Hessian2Output:
             -262144 <= value <= 262143  value = ((code - 0xd4) << 16) + (b1 << 8) + b0
         '''
         if -16 <= value <= 47 :
-            self.__writeByte(0x90 + value)
+            self.__writeByte(chr(0x90))
+            self.__writeByte(chr(value))
         elif -2048 <= value <= 2047 :
-            self.__writeByte(0xc8 + (value >> 8))
+            self.__writeByte(0xc8)
+            self.__writeByte(chr(value >> 8))
             self.__writeByte(value & 0xff)
         elif -262144 <= value <= 262143 :
-            self.__writeByte(0xd4 + (value >> 16))
+            self.__writeByte(0xd4)
+            self.__writeByte(chr(value >> 16))
             self.__pack('>H', (value >> 8))
         elif  -0x80000000 <= value <= 0x7fffffff:
             self.__write(b'I')
@@ -168,23 +173,22 @@ class Hessian2Output:
         while length > 65535 :
             self.__write(0x52)
             self.__pack('>H', 65535)
-            for _ in range(65535):
-                self.__write(value[_].encode('utf-8'))
+            self.__write(value[:65535].encode('utf-8'))
             value = value[65535:]
             length -= 65535
         
         if length <= 31 :
-            self.__writeByte(length)
+            self.__writeByte(chr(length))
         elif length <= 1023 :
-            self.__writeByte(0x30 + (length >> 8))
-            self.__writeByte(length & 0xff)
+            self.__writeByte(0x30)
+            self.__writeByte(chr(length >> 8))
+            self.__writeByte(chr(length & 0xff))
         else :
             self.__write(b'S')
             self.__pack('>H', length)
         
         if length > 0 :
-            for i in range(length):
-                self.__write(value[i].encode('utf-8'))
+            self.__write(value.encode('utf-8'))
 
     def __addRef(self, value) :
         refId = 0
@@ -219,7 +223,8 @@ class Hessian2Output:
             return
 
         if len(value) <= 7 :
-            self.__writeByte(0x78 + len(value))
+            self.__writeByte(0x78)
+            self.__writeByte(chr(len(value)))
         else :
             self.__write(0x58)
             self.__encodeInt(len(value))
@@ -258,9 +263,11 @@ class Hessian2Output:
             value = value[65535:]
 
         if len(value) <= 15 :
-            self.__writeByte(0x20 + len(value))
+            self.__writeByte(0x20)
+            self.__writeByte(chr(len(value)))
         elif len(value) <= 1023 :
-            self.__writeByte(0x34 + value >> 8)
+            self.__writeByte(0x34)
+            self.__writeByte(value >> 8)
             self.__write(value & 0xff)
         else :
             self.__write(b'B')
@@ -299,7 +306,8 @@ class Hessian2Output:
         classDefId = self.__addClassDef(value)
 
         if classDefId <= 15 :
-            self.__writeByte(0x60 + classDefId)
+            self.__writeByte(0x60)
+            self.__writeByte(classDefId)
         else :
             self.__write(b'O')
             self.__encodeInt(classDefId)
@@ -308,7 +316,7 @@ class Hessian2Output:
             self.__mWriteObject(value.__dict__[fieldName])
             
 if __name__ == '__main__':
-    str = {'a':1, 'b':325434657687, 'c':3134.1, 'd':[1,3,4,5,6],'e':{'但是':'发动机'}}
+    str1 = {'a':1, 'b':325434657687, 'c':3134.1, 'd':[1,3,4,5,6],'e':{'但是':'发动机'}}
     ho = Hessian2Output()
-    ho.writeObject(str)
+    ho.writeObject(str1)
     print(base64.b64encode(ho.output))

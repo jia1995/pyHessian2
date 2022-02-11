@@ -264,7 +264,8 @@ class Deserialization2Hessian:
 
     def __getMapData__(self, maps:Dict={}):
         while self.__readCur__()!=0x5a:
-            maps[self.__decoder__()] = self.__decoder__()
+            k = self.__decoder__()
+            maps[k] = self.__decoder__()
         self.pos+=1
 
     @Decode((0x51,))
@@ -286,14 +287,14 @@ class Deserialization2Hessian:
 
 
 if __name__=='__main__':
-    # enc = 'Vgdbc3RyaW5nnAExATIBNAE1ATgBOQEwATQBMgE3ATgBMA=='
-    # deserialization2Hessian = Deserialization2Hessian()
-    # print(base64.b64decode(enc))
-    # print(deserialization2Hessian.decoder(enc))
+    enc = 'SAFhwpEBYkxiJ1x4MDBceDAwXHgwMEtceGM1alx4Y2JceDk3JwFjX2InRUNceGUxXHg5YScBZFfCkcKTwpTClcKWWgFlSALkvYbmmK8D5Y+R5Yqo5py6Wlo='
+    deserialization2Hessian = Deserialization2Hessian()
+    print(base64.b64decode(enc))
+    print(deserialization2Hessian.decoder(enc))
     # json.dump(deserialization2Hessian.decoder(enc), open('a5.json','w'), indent=2,ensure_ascii=False)
-    f = open('test/test.txt')
-    for i in f.readlines():
-        enc = i
-        deserialization2Hessian = Deserialization2Hessian()
-        res = deserialization2Hessian.decoder(enc)
-        print(res)
+    # f = open('test/test.txt')
+    # for i in f.readlines():
+    #     enc = i
+    #     deserialization2Hessian = Deserialization2Hessian()
+    #     res = deserialization2Hessian.decoder(enc)
+    #     print(res)

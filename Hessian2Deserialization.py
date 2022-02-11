@@ -3,11 +3,13 @@ import struct
 import base64
 from re import sub
 import json
+from types import FunctionType
+from typing import Dict, List, Tuple
 
 DECODER = [None]*256
 
-def Decode(codes):
-    def register(f):
+def Decode(codes:Tuple[Tuple,...]):
+    def register(f:FunctionType):
         for code in codes:
             if type(code) == int:
                 DECODER[code] = f
@@ -41,26 +43,26 @@ class Deserialization2Hessian:
         self.pos+=1
         return re
     
-    def __decoder__(self, withType=False):
+    def __decoder__(self, withType:bool=False):
         if self.pos>=self.len:
             return 
         code = self.__readCur__()
         return DECODER[code](self, withType)
 
     @Decode((ord('N'),))
-    def __getNull__(self, withType=False):
+    def __getNull__(self, withType:bool=False):
         self.__getCur__()
         return None
     
     @Decode((0x54, 0x46))
-    def __getBoolean__(self, withType=False):
+    def __getBoolean__(self, withType:bool=False):
         return self.__getCur__()==0x54
 
     def __KthAdd__(self, k):
         return int.from_bytes(self.__readKBin__(k), byteorder='big')
     
     @Decode(((0x80, 0xd7), 0x49)) 
-    def __getInt__(self, withType=False):
+    def __getInt__(self, withType:bool=False):
         code = self.__getCur__()
         if 0x80 <= code <= 0xbf:
             return code - 0x90
@@ -72,7 +74,7 @@ class Deserialization2Hessian:
             return self.__KthAdd__(4)
     
     @Decode(((0xd8, 0xff),(0x38, 0x3f), 0x59, 0x4c))
-    def __getLong__(self, withType=False):
+    def __getLong__(self, withType:bool=False):
         code = self.__getCur__()
         if 0xd8 <= code <= 0xef:
             return int(code - 0xe0)
@@ -85,13 +87,13 @@ class Deserialization2Hessian:
         elif code == 0x4c:
             return self.__KthAdd__(8)
 
-    def __readKBin__(self, k):
+    def __readKBin__(self, k:int):
         res = self.bstr[self.pos:self.pos+k]
         self.pos+=k
         return res
     
     @Decode(((0x5b, 0x5f),0x44)) 
-    def __getDouble__(self, withType=False):
+    def __getDouble__(self, withType:bool=False):
         code = self.__getCur__()
         if code == 0x5b:
             return 0.0
@@ -107,7 +109,7 @@ class Deserialization2Hessian:
             return float(struct.unpack('>d', self.__readKBin__(8))[0])
 
     @Decode((0x4a, 0x4b))
-    def __getDate__(self, withType=False):
+    def __getDate__(self, withType:bool=False):
         code = self.__getCur__()
         re = 0
         if code == 0x4a:
@@ -118,7 +120,7 @@ class Deserialization2Hessian:
             return datetime.datetime.strftime(datetime.datetime.fromtimestamp(re* 60),'%Y-%m-%d %H:%M:%S.%f')
 
     @Decode(((0x20, 0x2f),(0x34,0x37), 0x41, 0x42))
-    def __getBytes__(self, withType=False):
+    def __getBytes__(self, withType:bool=False):
         code = self.__getCur__()
         if 0x20 <= code <= 0x2f:
             lens = code - 0x20
@@ -140,7 +142,7 @@ class Deserialization2Hessian:
         bufs+=self.__readKBin__(length)
         return bufs
 
-    def __readString__(self, length):
+    def __readString__(self, length:int):
         re = ''
         for _ in range(length):
             start = self.__readCur__()
@@ -156,7 +158,7 @@ class Deserialization2Hessian:
         return re
 
     @Decode(((0x00,0x1f),(0x30,0x33),0x52,0x53))
-    def __getString__(self, withType=False):
+    def __getString__(self, withType:bool=False):
         str1 = ''
         code = self.__getCur__()
         length=0
@@ -176,7 +178,7 @@ class Deserialization2Hessian:
             str1 += self.__getString__()
         return str1
 
-    def __getType__(self, withType=False):
+    def __getType__(self, withType:bool=False):
         code = self.__readCur__()
         if 0x00<=code <= 0x1f or 0x30<= code <= 0x33 or 0x52<=code<=0x53:
             types = self.__getString__()
@@ -186,7 +188,7 @@ class Deserialization2Hessian:
             types = self.types[ref]
         return types
 
-    def __generateClass__(self, classes, k, v, re):
+    def __generateClass__(self, classes:str, k:List[str], v:List, re:Dict):
         mt = sub(r'com\.caucho\.hessian\.io\..*Handle','', classes)
         res = None
         if 'com.google.common.collect.ImmutableMap' in classes:
@@ -202,7 +204,7 @@ class Deserialization2Hessian:
         return res
 
     @Decode((0x43,))
-    def __getClass__(self, withType=False):
+    def __getClass__(self, withType:bool=False):
         pos = self.pos
         self.__getCur__()
         classes=self.__getString__()
@@ -213,7 +215,7 @@ class Deserialization2Hessian:
         return v
 
     @Decode(((0x60, 0x6f), 0x4f))
-    def __getObject__(self, withType=False):
+    def __getObject__(self, withType:bool=False):
         code = self.__getCur__()
         res = {}
         self.__addRef__(res)
@@ -230,7 +232,7 @@ class Deserialization2Hessian:
         self.refMap.append(obj)
         self.refId+=1
 
-    def __readList__(self, length):
+    def __readList__(self, length:int):
         return [self.__decoder__() for _ in range(length)]
 
     def __readUnTypedList__(self):
@@ -240,7 +242,7 @@ class Deserialization2Hessian:
         return re
 
     @Decode(((0x55, 0x58),(0x70, 0x7f)))
-    def __getList__(self, withType=False):
+    def __getList__(self, withType:bool=False):
         code = self.__getCur__()
         length = 0
 
@@ -260,19 +262,19 @@ class Deserialization2Hessian:
             self.__addRef__(re)
         return re
 
-    def __getMapData__(self, maps={}):
+    def __getMapData__(self, maps:Dict={}):
         while self.__readCur__()!=0x5a:
             maps[self.__decoder__()] = self.__decoder__()
         self.pos+=1
 
     @Decode((0x51,))
-    def __getRef__(self, withType=False):
+    def __getRef__(self, withType:bool=False):
         _ = self.__getCur__()
         lens = self.__decoder__()
         return self.refMap[lens]
 
     @Decode((0x48, 0x4d))
-    def __getMap__(self, withType=False):
+    def __getMap__(self, withType:bool=False):
         code = self.__getCur__()
         res = {}
         if code == 0x4d: # map with type ('M')

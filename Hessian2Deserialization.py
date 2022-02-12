@@ -239,6 +239,7 @@ class Deserialization2Hessian:
         re = []
         while self.__readCur__()!=0x5a:
             re.append(self.__decoder__())
+        self.__getCur__()
         return re
 
     @Decode(((0x55, 0x58),(0x70, 0x7f)))
@@ -264,8 +265,9 @@ class Deserialization2Hessian:
 
     def __getMapData__(self, maps:Dict={}):
         while self.__readCur__()!=0x5a:
-            maps[self.__decoder__()] = self.__decoder__()
-        self.pos+=1
+            k = self.__decoder__()
+            maps[k] = self.__decoder__()
+        self.__getCur__()
 
     @Decode((0x51,))
     def __getRef__(self, withType:bool=False):
@@ -286,7 +288,7 @@ class Deserialization2Hessian:
 
 
 if __name__=='__main__':
-    # enc = 'Vgdbc3RyaW5nnAExATIBNAE1ATgBOQEwATQBMgE3ATgBMA=='
+    # enc = 'SAFhkQFiTAAAAEvFasuXAWNfRUPhmgFkV5GTlJWWWgFlSALkvYbmmK8D5Y+R5Yqo5py6Wlo='
     # deserialization2Hessian = Deserialization2Hessian()
     # print(base64.b64decode(enc))
     # print(deserialization2Hessian.decoder(enc))

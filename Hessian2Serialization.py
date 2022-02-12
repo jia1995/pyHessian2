@@ -27,6 +27,7 @@ class Hessian2Output:
 
     def writeObject(self, value) :
         self.__mWriteObject(value)
+        return base64.b64encode(self.output).decode()
 
     def getLength(self) :
         return len(self.output.getvalue())
@@ -309,5 +310,4 @@ class Hessian2Output:
 if __name__ == '__main__':
     str1 = {'a':1, 'b':325434657687, 'c':3134.1, 'd':[1,3,4,5,6],'e':{'但是':'发动机'}}
     ho = Hessian2Output()
-    ho.writeObject(str1)
-    print(base64.b64encode(ho.output))
+    print(ho.writeObject(str1))

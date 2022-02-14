@@ -200,6 +200,8 @@ class Deserialization2Hessian:
         else:
             dic = {a:b for a,b in zip(k,v)}
             res = dic
+            if len(k)==1 and k==['name']:
+                res = v[0]
         re.update(dic)
         return res
 
@@ -273,7 +275,10 @@ class Deserialization2Hessian:
     def __getRef__(self, withType:bool=False):
         _ = self.__getCur__()
         lens = self.__decoder__()
-        return self.refMap[lens]
+        res = self.refMap[lens]
+        if len(res)==1 and list(res.keys()) == ['name']:
+            res = res['name']
+        return res
 
     @Decode((0x48, 0x4d))
     def __getMap__(self, withType:bool=False):

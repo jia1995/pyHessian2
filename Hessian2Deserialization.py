@@ -43,26 +43,26 @@ class Deserialization2Hessian:
         self.pos+=1
         return re
     
-    def __decoder__(self, withType:str=''):
+    def __decoder__(self, withType:str='', isFlag=False):
         if self.pos>=self.len:
             return 
         code = self.__readCur__()
-        return DECODER[code](self)
+        return DECODER[code](self, withType, isFlag)
 
     @Decode((ord('N'),))
-    def __getNull__(self, withType:str=''):
+    def __getNull__(self, withType:str='', isFlag=False):
         self.__getCur__()
         return 'None',None
     
     @Decode((0x54, 0x46))
-    def __getBoolean__(self, withType:str=''):
+    def __getBoolean__(self, withType:str='', isFlag=False):
         return 'bool',self.__getCur__()==0x54
 
     def __KthAdd__(self, k):
         return int.from_bytes(self.__readKBin__(k), byteorder='big')
     
     @Decode(((0x80, 0xd7), 0x49)) 
-    def __getInt__(self, withType:str=''):
+    def __getInt__(self, withType:str='', isFlag=False):
         code = self.__getCur__()
         if 0x80 <= code <= 0xbf:
             return 'int',code - 0x90
@@ -74,7 +74,7 @@ class Deserialization2Hessian:
             return 'int',self.__KthAdd__(4)
     
     @Decode(((0xd8, 0xff),(0x38, 0x3f), 0x59, 0x4c))
-    def __getLong__(self, withType:str=''):
+    def __getLong__(self, withType:str='', isFlag=False):
         code = self.__getCur__()
         if 0xd8 <= code <= 0xef:
             return 'long',int(code - 0xe0)
@@ -93,7 +93,7 @@ class Deserialization2Hessian:
         return res
     
     @Decode(((0x5b, 0x5f),0x44)) 
-    def __getDouble__(self, withType:str=''):
+    def __getDouble__(self, withType:str='', isFlag=False):
         code = self.__getCur__()
         if code == 0x5b:
             return 'double',0.0
@@ -109,7 +109,7 @@ class Deserialization2Hessian:
             return 'double',float(struct.unpack('>d', self.__readKBin__(8))[0])
 
     @Decode((0x4a, 0x4b))
-    def __getDate__(self, withType:str=''):
+    def __getDate__(self, withType:str='', isFlag=False):
         code = self.__getCur__()
         re = 0
         if code == 0x4a:
@@ -120,7 +120,7 @@ class Deserialization2Hessian:
             return 'date',datetime.datetime.strftime(datetime.datetime.fromtimestamp(re* 60),'%Y-%m-%d %H:%M:%S.%f')
 
     @Decode(((0x20, 0x2f),(0x34,0x37), 0x41, 0x42))
-    def __getBytes__(self, withType:str=''):
+    def __getBytes__(self, withType:str='', isFlag=False):
         code = self.__getCur__()
         if 0x20 <= code <= 0x2f:
             lens = code - 0x20
@@ -158,7 +158,7 @@ class Deserialization2Hessian:
         return re
 
     @Decode(((0x00,0x1f),(0x30,0x33),0x52,0x53))
-    def __getString__(self, withType:str=''):
+    def __getString__(self, withType:str='', isFlag=False):
         str1 = ''
         code = self.__getCur__()
         length=0
@@ -178,7 +178,7 @@ class Deserialization2Hessian:
             str1 += self.__getString__()[1]
         return 'string', str1
 
-    def __getType__(self, withType:str=''):
+    def __getType__(self, withType:str='', isFlag=False):
         code = self.__readCur__()
         if 0x00<=code <= 0x1f or 0x30<= code <= 0x33 or 0x52<=code<=0x53:
             _, types = self.__getString__()
@@ -206,7 +206,7 @@ class Deserialization2Hessian:
         return res
 
     @Decode((0x43,))
-    def __getClass__(self, withType:str=''):
+    def __getClass__(self, withType:str='', isFlag=False):
         pos = self.pos
         self.__getCur__()
         _,classes=self.__getString__()
@@ -217,7 +217,7 @@ class Deserialization2Hessian:
         return classes, v
 
     @Decode(((0x60, 0x6f), 0x4f))
-    def __getObject__(self, withType:str=''):
+    def __getObject__(self, withType:str='', isFlag=False):
         code = self.__getCur__()
         res = {}
         rem = {'data':res,'type':''}
@@ -229,12 +229,13 @@ class Deserialization2Hessian:
         cf = self.classes[ref]
         classes, fields = cf['name'], cf['fields']
         rem['type']=classes
+        isFlag = 'com.google.common.collect.ImmutableMap' in classes
         if self.classes[ref]['type']==[]:
-            re1 = [self.__decoder__() for _ in fields]
+            re1 = [self.__decoder__(isFlag=isFlag) for _ in fields]
             re = [i[1] for i in re1]
             self.classes[ref]['type'] = [i[0] for i in re1]
         else:
-            re = [self.__decoder__(withType=_)[1] for _ in cf['type']]
+            re = [self.__decoder__(withType=_,isFlag=isFlag)[1] for _ in cf['type']]
         return classes, self.__generateClass__(classes, fields, re, res)
     
     def __addRef__(self, obj):
@@ -252,7 +253,7 @@ class Deserialization2Hessian:
         return re
 
     @Decode(((0x55, 0x58),(0x70, 0x7f)))
-    def __getList__(self, withType:str=''):
+    def __getList__(self, withType:str='', isFlag=False):
         code = self.__getCur__()
         length = 0
         rem = {'data':[], 'type':'list'}
@@ -269,7 +270,8 @@ class Deserialization2Hessian:
         else:
             re = self.__readList__(length)
         rem['data'] = re
-        self.__addRef__(rem)
+        if not isFlag:
+            self.__addRef__(rem)
         return 'list',re
 
     def __getMapData__(self, maps:Dict={}):
@@ -279,11 +281,11 @@ class Deserialization2Hessian:
         self.__getCur__()
 
     @Decode((0x51,))
-    def __getRef__(self, withType:str=''):
+    def __getRef__(self, withType:str='', isFlag=False):
         _ = self.__getCur__()
         _, lens = self.__decoder__()
         rem = self.refMap[lens]
-        if rem['type']!=withType:
+        if withType and rem['type']!=withType:
             rem = self.refMap[lens-1]
         res = rem['data']
         if len(res)==1 and (isinstance(res, dict) and list(res.keys()) == ['name']):
@@ -291,7 +293,7 @@ class Deserialization2Hessian:
         return 'ref',res
 
     @Decode((0x48, 0x4d))
-    def __getMap__(self, withType:str=''):
+    def __getMap__(self, withType:str='', isFlag=False):
         code = self.__getCur__()
         res = {}
         rem = {'data':res, 'type':'map'}

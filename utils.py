@@ -13,6 +13,12 @@ def hashable(data):
     else:
         return hash(data)
 
+def str2re(a):
+    if isinstance(a, str):
+        return f'"{a}"'
+    else:
+        return f'{a}'
+
 class HessianDict(MutableMapping[_KT,_VT], Generic[_KT,_VT]):
     def __init__(self, **kargs):
         self.data = {}
@@ -76,9 +82,6 @@ class HessianDict(MutableMapping[_KT,_VT], Generic[_KT,_VT]):
 
     def __iter__(self) -> Iterator[_KT]: ...
     
-    def __hash__(self):
-        return hashable(self.data)
-    
     def update(self, other=(), /, **kwds):
         if isinstance(other, Mapping):
             for key in other:
@@ -93,4 +96,10 @@ class HessianDict(MutableMapping[_KT,_VT], Generic[_KT,_VT]):
             self.__setitem__(key, value)
 
     def __repr__(self):
-        return '{'+','.join([f'{a}:{b}' for a,b in zip(self.keys(), self.values())])+'}'
+        re = []
+        for a,b in zip(self.keys(), self.values()):
+            if isinstance(b, type(self)) and id(b)==id(self):
+                re.append(f'{str2re(a)}:...')
+            else:
+                re.append(f'{str2re(a)}:{str2re(b)}')
+        return '{'+','.join(re)+'}'

@@ -189,7 +189,7 @@ class Deserialization2Hessian:
             types = self.types[ref]
         return types
 
-    def __generateClass__(self, classes:str, k:List[str], v:List, re:Dict):
+    def __generateClass__(self, classes:str, k:List[str], v:List, re:HessianDict):
         mt = sub(r'com\.caucho\.hessian\.io\..*Handle','', classes)
         res = None
         if 'com.google.common.collect.ImmutableMap' in classes:

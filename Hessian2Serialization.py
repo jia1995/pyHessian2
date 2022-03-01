@@ -308,6 +308,10 @@ class Hessian2Output:
             self.__mWriteObject(value.__dict__[fieldName])
             
 if __name__ == '__main__':
-    str1 = {'a':1, 'b':325434657687, 'c':3134.1, 'd':[1,3,4,5,6],'e':{'但是':'发动机'}}
-    ho = Hessian2Output()
-    print(ho.writeObject(str1))
+    f = open('res2.log')
+    for str1 in f.readlines():
+        ho = Hessian2Output()
+        print(ho.writeObject(str1))
+    # str1 = {'a':1, 'b':325434657687, 'c':3134.1, 'd':[1,3,4,5,6],'e':{'但是':'发动机'}}
+    # ho = Hessian2Output()
+    # print(ho.writeObject(str1))

@@ -33,8 +33,8 @@ class Deserialization2Hessian:
             bstr = base64.b64decode(bstr)
         self.bstr = bstr
         self.len = len(bstr)
-        self.__decoder__()
-        return self.refMap[0]['data']
+        _, res = self.__decoder__()
+        return res
 
     def __readCur__(self):
         return self.bstr[self.pos]

@@ -41,11 +41,12 @@ class Hessian2Output:
         self.__write(struct.pack(formatStr, value))
 
     def __mWriteObject(self, obj) :
-        if type(obj) in ENCODERS :
+        if type(obj) in (int, bytes, float, str, type(None), bool, datetime.datetime, time.struct_time, list, tuple, dict) :
             encoder = ENCODERS[type(obj)]
             encoder(self, obj)
         else :
-            raise TypeError('encoder cannot serialize %s' % (type(obj),))
+            encoder = ENCODERS[object]
+            encoder(self, obj)
 
     @encoderFor(type(None))
     def __encodeNull(self, value) :
@@ -269,7 +270,8 @@ class Hessian2Output:
 
     def __addClassDef(self, value) :
         classDefId = 0
-        type = value._metaType
+        print(value)
+        type = value.__class__
 
         for classDef in self.classDefs :
             if type == classDef.type :
@@ -277,10 +279,9 @@ class Hessian2Output:
             classDefId += 1
 
         self.__write('C')
-        self.__mWriteObject(type)
+        self.__mWriteObject(str(type))
 
         fieldNames = value.__dict__.keys()
-        fieldNames.remove('_metaType')
         
         self.__encodeInt(len(fieldNames))
         for fieldName in fieldNames :
@@ -308,10 +309,6 @@ class Hessian2Output:
             self.__mWriteObject(value.__dict__[fieldName])
             
 if __name__ == '__main__':
-    f = open('res2.log')
-    for str1 in f.readlines():
-        ho = Hessian2Output()
-        print(ho.writeObject(str1))
-    # str1 = {'a':1, 'b':325434657687, 'c':3134.1, 'd':[1,3,4,5,6],'e':{'但是':'发动机'}}
-    # ho = Hessian2Output()
-    # print(ho.writeObject(str1))
+    str1 = {'a':1, 'b':325434657687, 'c':3134.1, 'd':[1,3,4,5,6],'e':{'但是':'发动机'}}
+    ho = Hessian2Output()
+    print(ho.writeObject(str1))

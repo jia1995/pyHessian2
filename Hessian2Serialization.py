@@ -270,7 +270,6 @@ class Hessian2Output:
 
     def __addClassDef(self, value) :
         classDefId = 0
-        print(value)
         type = value.__class__
 
         for classDef in self.classDefs :

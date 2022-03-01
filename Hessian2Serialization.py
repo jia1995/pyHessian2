@@ -299,7 +299,7 @@ class Hessian2Output:
 
         if classDefId <= 15 :
             self.__write(0x60)
-            self.__write(classDefId)
+            self.__write(classDefId}+0x90)
         else :
             self.__write('O')
             self.__encodeInt(classDefId)

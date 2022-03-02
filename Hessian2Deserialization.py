@@ -40,26 +40,26 @@ class Deserialization2Hessian:
         self.pos+=1
         return re
     
-    def __decoder__(self, withType:str='', isFlag=False):
+    def __decoder__(self, isFlag=False):
         if self.pos>=self.len:
             return 
         code = self.bstr[self.pos]
-        return DECODER[code](self, withType, isFlag)
+        return DECODER[code](self, isFlag)
 
     @Decode((ord('N'),))
-    def __getNull__(self, withType:str='', isFlag=False):
+    def __getNull__(self, isFlag=False):
         self.bstr[self.pos]
         self.pos+=1
         return 'None',None
     
     @Decode((0x54, 0x46))
-    def __getBoolean__(self, withType:str='', isFlag=False):
+    def __getBoolean__(self, isFlag=False):
         re = self.bstr[self.pos]
         self.pos+=1
         return 'bool',re==0x54
     
     @Decode(((0x80, 0xd7), 0x49)) 
-    def __getInt__(self, withType:str='', isFlag=False):
+    def __getInt__(self, isFlag=False):
         code = self.bstr[self.pos]
         self.pos+=1
         if 0x80 <= code <= 0xbf:
@@ -78,7 +78,7 @@ class Deserialization2Hessian:
             return 'int',int.from_bytes(res, byteorder='big')
     
     @Decode(((0xd8, 0xff),(0x38, 0x3f), 0x59, 0x4c))
-    def __getLong__(self, withType:str='', isFlag=False):
+    def __getLong__(self, isFlag=False):
         code = self.bstr[self.pos]
         self.pos+=1
         if 0xd8 <= code <= 0xef:
@@ -101,7 +101,7 @@ class Deserialization2Hessian:
             return 'long',int.from_bytes(res, byteorder='big')
     
     @Decode(((0x5b, 0x5f),0x44)) 
-    def __getDouble__(self, withType:str='', isFlag=False):
+    def __getDouble__(self, isFlag=False):
         code = self.bstr[self.pos]
         self.pos+=1
         if code == 0x5b:
@@ -126,7 +126,7 @@ class Deserialization2Hessian:
             return 'double',float(unpack('>d', res)[0])
 
     @Decode((0x4a, 0x4b))
-    def __getDate__(self, withType:str='', isFlag=False):
+    def __getDate__(self, isFlag=False):
         code = self.bstr[self.pos]
         self.pos+=1
         re = 0
@@ -142,7 +142,7 @@ class Deserialization2Hessian:
             return 'date',datetime.strftime(datetime.fromtimestamp(re* 60),'%Y-%m-%d %H:%M:%S.%f')
 
     @Decode(((0x20, 0x2f),(0x34,0x37), 0x41, 0x42))
-    def __getBytes__(self, withType:str='', isFlag=False):
+    def __getBytes__(self, isFlag=False):
         code = self.bstr[self.pos]
         self.pos+=1
         if 0x20 <= code <= 0x2f:
@@ -193,7 +193,7 @@ class Deserialization2Hessian:
         return re
 
     @Decode(((0x00,0x1f),(0x30,0x33),0x52,0x53))
-    def __getString__(self, withType:str='', isFlag=False):
+    def __getString__(self, isFlag=False):
         str1 = ''
         code = self.bstr[self.pos]
         self.pos+=1
@@ -219,7 +219,7 @@ class Deserialization2Hessian:
             str1 += self.__getString__()[1]
         return 'string', str1
 
-    def __getType__(self, withType:str='', isFlag=False):
+    def __getType__(self, isFlag=False):
         code = self.bstr[self.pos]
         if 0x00<=code <= 0x1f or 0x30<= code <= 0x33 or 0x52<=code<=0x53:
             _, types = self.__getString__()
@@ -252,7 +252,7 @@ class Deserialization2Hessian:
         return res
 
     @Decode((0x43,))
-    def __getClass__(self, withType:str='', isFlag=False):
+    def __getClass__(self, isFlag=False):
         self.pos+=1
         _,classes=self.__getString__()
         _,size=self.__getInt__()
@@ -262,7 +262,7 @@ class Deserialization2Hessian:
         return classes, v
 
     @Decode(((0x60, 0x6f), 0x4f))
-    def __getObject__(self, withType:str='', isFlag=False):
+    def __getObject__(self, isFlag=False):
         code = self.bstr[self.pos]
         self.pos+=1
         res = HessianDict()
@@ -282,7 +282,7 @@ class Deserialization2Hessian:
             re = [i[1] for i in re1]
             self.classes[ref]['type'] = [i[0] for i in re1]
         else:
-            re = [self.__decoder__(withType=_,isFlag=isFlag)[1] for _ in cf['type']]
+            re = [self.__decoder__(isFlag=isFlag)[1] for _ in cf['type']]
         return classes, self.__generateClass__(classes, fields, re, res)
     
     def __addRef__(self, obj):
@@ -299,11 +299,14 @@ class Deserialization2Hessian:
         return re
 
     @Decode(((0x55, 0x58),(0x70, 0x7f)))
-    def __getList__(self, withType:str='', isFlag=False):
+    def __getList__(self, isFlag=False):
         code = self.bstr[self.pos]
         self.pos+=1
         length = 0
-        rem = {'data':[], 'type':'list'}
+        re = []
+        rem = {'data':re, 'type':'list'}
+        if not isFlag:
+            self.__addRef__(rem)
         if code==0x55 or code==0x56 or 0x70 <= code<=0x77:
             _ = self.__getType__()
         if code==0x56 or code==0x58:
@@ -313,12 +316,9 @@ class Deserialization2Hessian:
         elif 0x78 <= code<=0x7f:
             length = code-0x78
         if code==0x57 or code==0x55:
-            re = self.__readUnTypedList__()
+            re.extend(self.__readUnTypedList__())
         else:
-            re = self.__readList__(length)
-        rem['data'] = re
-        if not isFlag:
-            self.__addRef__(rem)
+            re.extend(self.__readList__(length))
         return 'list',re
 
     def __getMapData__(self, maps:Dict=HessianDict()):
@@ -329,19 +329,17 @@ class Deserialization2Hessian:
         self.pos+=1
 
     @Decode((0x51,))
-    def __getRef__(self, withType:str='', isFlag=False):
+    def __getRef__(self, isFlag=False):
         self.pos+=1
         _, lens = self.__decoder__()
         rem = self.refMap[lens]
-        if withType and rem['type']!=withType:
-            rem = self.refMap[lens-1]
         res = rem['data']
-        if len(res)==1 and (isinstance(res, dict) and list(res.keys()) == ['name']):
-            res = res['name']
+        if type(res) not in [list, tuple]:
+            res = self.__generateClass__(rem['type'], list(res.keys()), list(res.values()), HessianDict())
         return 'ref',res
 
     @Decode((0x48, 0x4d))
-    def __getMap__(self, withType:str='', isFlag=False):
+    def __getMap__(self, isFlag=False):
         code = self.bstr[self.pos]
         self.pos+=1
         res = HessianDict()

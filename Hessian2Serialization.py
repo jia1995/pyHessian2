@@ -73,7 +73,7 @@ class Hessian2Output:
         if -16 <= value <= 47:
             self.__write(value+0x90)
         elif -2048 <= value <= 2047 :
-            self.__write(0xc8+value >> 8)
+            self.__write(0xc8+(value >> 8))
             self.__write(value & 0xff)
         elif -262144 <= value <= 262143 :
             self.__write(0xd4+(value >> 16))
@@ -202,7 +202,6 @@ class Hessian2Output:
         ''' list ::= x57 value* 'Z'        # variable-length untyped list '''
         if self.__addRef(value) :
             return
-
         self.__write(0x57)
         for element in value :
             self.__mWriteObject(element)
@@ -216,7 +215,6 @@ class Hessian2Output:
         '''
         if self.__addRef(value) :
             return
-
         if len(value) <= 7 :
             self.__write(0x78)
             self.__write(chr(len(value)))
@@ -298,8 +296,7 @@ class Hessian2Output:
         classDefId = self.__addClassDef(value)
 
         if classDefId <= 15 :
-            self.__write(0x60)
-            self.__write(classDefId+0x90)
+            self.__write(0x60+classDefId)
         else :
             self.__write('O')
             self.__encodeInt(classDefId)

@@ -79,10 +79,17 @@ class HessianDict(MutableMapping[_KT,_VT], Generic[_KT,_VT]):
             self.data.pop(key)
             self.key.pop(key)
 
-    def __iter__(self) -> Iterator[_KT]: ...
+    def __iter__(self) -> Iterator[_KT]:
+        for key in self.key:
+            yield key
 
     def update(self, other=(), /, **kwds):
-        if isinstance(other, Mapping):
+        if isinstance(other, HessianDict):
+            for key, value in other.items():
+                k = hashable(key)
+                self.data[k] = value
+                self.key[k] = key
+        elif isinstance(other, Mapping):
             for key in other:
                 k = hashable(key)
                 self.data[k] = other[key]
@@ -106,7 +113,7 @@ class HessianDict(MutableMapping[_KT,_VT], Generic[_KT,_VT]):
         k,v = self.key.values(), self.data.values()
         for a,b in zip(k,v):
             if id(b)==id(self):
-                re.append(f'{str2re(a)}:...')
+                re.append(f'{str2re(a)}'+':{...}')
             else:
                 re.append(f'{str2re(a)}:{str2re(b)}')
         return '{'+','.join(re)+'}'

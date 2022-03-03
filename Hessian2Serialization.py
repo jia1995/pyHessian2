@@ -99,22 +99,22 @@ class Hessian2Output:
                 32bit float
         '''
         intValue = int(value)
-        if intValue == value :
+        if intValue == value and -32768 <= intValue <= 32767 :
             if intValue == 0 :
                 self.__write(0x5b)
             elif intValue == 1 :
                 self.__write(0x5c)
             elif -128 <= intValue <= 127 :
                 self.__write(0x5d)
-                self.__write(value & 0xff)
-            elif -32768 <= value <= 32767 :
+                self.__write(intValue & 0xff)
+            elif -32768 <= intValue <= 32767 :
                 self.__write(0x5e)
-                self.__pack('>h', value)
+                self.__pack('>h', intValue)
             return
         mills = int(value * 1000);
-        if (0.001 * mills) == value :
+        if (0.001 * mills) == value and (0.001*-0x80000000) <= value <= (0.001*0x7fffffff):
             self.__write(0x5f)
-            self.__pack('>f', value)
+            self.__pack('>i', mills)
         else :
             self.__write('D')
             self.__pack('>d', value)

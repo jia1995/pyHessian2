@@ -71,11 +71,11 @@ class Deserialization2Hessian:
         elif 0xd0 <= code <= 0xd7:
             res = self.bstr[self.pos:self.pos+2]
             self.pos+=2
-            return 'int',((code - 0xd4) *65536) + int.from_bytes(res, byteorder='big')
+            return 'int',((code - 0xd4) *65536) + unpack('>H', res)[0]
         elif code == 0x49:
             res = self.bstr[self.pos:self.pos+4]
             self.pos+=4
-            return 'int',int.from_bytes(res, byteorder='big')
+            return 'int', unpack('>i', res)[0]
     
     @Decode(((0xd8, 0xff),(0x38, 0x3f), 0x59, 0x4c))
     def __getLong__(self, isFlag=False):
@@ -90,15 +90,15 @@ class Deserialization2Hessian:
         elif 0x38 <= code <= 0x3f:
             res = self.bstr[self.pos:self.pos+2]
             self.pos+=2
-            return 'long',((code - 0x3c) *65536) + int.from_bytes(res, byteorder='big')
+            return 'long',((code - 0x3c) *65536) + unpack('>H', res)[0]
         elif code == 0x59:
             res = self.bstr[self.pos:self.pos+4]
             self.pos+=4
-            return 'long',int.from_bytes(res, byteorder='big')
+            return 'long',unpack('>i', res)[0]
         elif code == 0x4c:
             res = self.bstr[self.pos:self.pos+8]
             self.pos+=8
-            return 'long',int.from_bytes(res, byteorder='big')
+            return 'long',unpack('>q', res)[0]
     
     @Decode(((0x5b, 0x5f),0x44)) 
     def __getDouble__(self, isFlag=False):

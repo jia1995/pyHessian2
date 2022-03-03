@@ -75,9 +75,9 @@ class Hessian2Output:
         elif -2048 <= value <= 2047 :
             self.__write(0xc8+(value >> 8))
             self.__write(value & 0xff)
-        elif -262144 <= value <= 262143 :
+        elif -0x40000 <= value <= 0x3ffff :
             self.__write(0xd4+(value >> 16))
-            self.__pack('>H', (value >> 8))
+            self.__pack('>h', (value+0x40000)%0x40000)
         elif  -0x80000000 <= value <= 0x7fffffff:
             self.__write('I')
             self.__pack('>i', value)

@@ -35,16 +35,9 @@ class Deserialization2Hessian:
         _, res = self.__decoder__()
         return res
     
-    def __getCur__(self):
-        re = self.bstr[self.pos]
-        self.pos+=1
-        return re
-    
     def __decoder__(self, isFlag=False):
-        if self.pos>=self.len:
-            return 
-        code = self.bstr[self.pos]
-        return DECODER[code](self, isFlag)
+        assert self.pos < self.len 
+        return DECODER[self.bstr[self.pos]](self, isFlag)
 
     @Decode((ord('N'),))
     def __getNull__(self, isFlag=False):
@@ -135,11 +128,10 @@ class Deserialization2Hessian:
             self.pos+=8
             re = int.from_bytes(res, byteorder='big')
             return 'date',datetime.strftime(datetime.fromtimestamp(re/1000),'%Y-%m-%d %H:%M:%S.%f')
-        else:
-            res = self.bstr[self.pos:self.pos+4]
-            self.pos+=4
-            re = int.from_bytes(res, byteorder='big')
-            return 'date',datetime.strftime(datetime.fromtimestamp(re* 60),'%Y-%m-%d %H:%M:%S.%f')
+        res = self.bstr[self.pos:self.pos+4]
+        self.pos+=4
+        re = int.from_bytes(res, byteorder='big')
+        return 'date',datetime.strftime(datetime.fromtimestamp(re* 60),'%Y-%m-%d %H:%M:%S.%f')
 
     @Decode(((0x20, 0x2f),(0x34,0x37), 0x41, 0x42))
     def __getBytes__(self, isFlag=False):
@@ -197,7 +189,6 @@ class Deserialization2Hessian:
         str1 = ''
         code = self.bstr[self.pos]
         self.pos+=1
-        length=0
         self.isLastChunk = True
         if 0x00<=code<=0x1f:
             length = code - 0x00
@@ -220,35 +211,30 @@ class Deserialization2Hessian:
         return 'string', str1
 
     def __getType__(self, isFlag=False):
-        code = self.bstr[self.pos]
-        if 0x00<=code <= 0x1f or 0x30<= code <= 0x33 or 0x52<=code<=0x53:
-            _, types = self.__getString__()
-            self.types.append(types)
-        else:
-            _, ref = self.__getInt__()
-            types = self.types[ref]
-        return types
+        _, t = self.__decoder__()
+        if isinstance(t, str):
+            self.types.append(t)
+            return t
+        return self.types[t]
 
     def __generateClass__(self, classes:str, k:List[str], v:List, re:HessianDict):
         res = re
+        dic = HessianDict()
         if 'com.google.common.collect.ImmutableMap' in classes:
-            dic = HessianDict()
             for a,b in zip(v[0], v[1]):
                 dic[a] = b
             res.update(dic)
         elif sub(r'com\.caucho\.hessian\.io\..*Handle','', classes)=='':
-            dic = HessianDict()
             for a,b in zip(k,v):
                 dic[a] = b
             res = v[0]
-        elif sub(r'java.math.BigDecimal','', classes)=='':
+        elif sub(r'java\.math\.BigDecimal','', classes)=='':
             a,b = k[0],v[0]
             if '.' in b: b = float(b)
             else: b= int(b)
-            dic=HessianDict(a=b)
+            dic[a]=b
             res = b
         else:
-            dic = HessianDict()
             for a,b in zip(k,v):
                 dic[a] = b
             res = dic
@@ -258,23 +244,18 @@ class Deserialization2Hessian:
         return res
 
     def __generateClass2__(self, classes:str, re:HessianDict):
-        k, v = list(re.keys()), list(re.values())
+        v = list(re.values())
         if 'com.google.common.collect.ImmutableMap' in classes:
             dic = HessianDict()
             for a,b in zip(v[0], v[1]):
                 dic[a] = b
             return dic
         elif sub(r'com\.caucho\.hessian\.io\..*Handle','', classes)=='':
-            dic = HessianDict()
-            for a,b in zip(k,v):
-                dic[a] = b
             return v[0]
         elif sub(r'java.math.BigDecimal','', classes)=='':
-            a,b = k[0],v[0]
-            if '.' in b: b = float(b)
-            else: b= int(b)
-            dic=HessianDict(a=b)
-            return b
+            b = v[0]
+            if '.' in b: return float(b)
+            else: return int(b)
         else:
             return re
     
@@ -347,13 +328,6 @@ class Deserialization2Hessian:
         else:
             re.extend(self.__readList__(length))
         return 'list',re
-
-    def __getMapData__(self, maps:Dict=HessianDict()):
-        while self.bstr[self.pos]!=0x5a:
-            k = self.__decoder__()[1]
-            v = self.__decoder__()[1]
-            maps[k] = v
-        self.pos+=1
 
     @Decode((0x51,))
     def __getRef__(self, isFlag=False):

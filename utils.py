@@ -11,6 +11,8 @@ def hashable(data):
         data = tuple(data)
     elif isinstance(data, dict):
         data = dumps(data)
+    elif isinstance(data, HessianDict):
+        data = str(data.data)
     return hash(data)
 
 def str2re(a):

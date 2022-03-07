@@ -337,7 +337,7 @@ class Deserialization2Hessian:
         res = rem['data']
         if type(res) not in [list, tuple]:
             res = self.__generateClass2__(rem['type'], res)
-        return 'ref',res
+        return rem['type'],res
 
     @Decode((0x48, 0x4d))
     def __getMap__(self, isFlag=False):

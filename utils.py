@@ -25,6 +25,10 @@ class HessianDict(MutableMapping[_KT,_VT], Generic[_KT,_VT]):
     def __init__(self, **kargs):
         self.data = {}
         self.key = {}
+        if isinstance(kargs, dict):
+            kargs = kargs.items()
+        elif isinstance(kargs, list):
+            kargs = zip(kargs[0], kargs[1])
         for k,v in kargs:
             t = hashable(k)
             self.data[t] = v

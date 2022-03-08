@@ -42,7 +42,7 @@ class HessianDict(MutableMapping[_KT,_VT], Generic[_KT,_VT]):
     def get(self, __key: _KT, __default: _VT | _T=...)-> _VT | _T:
         key = hashable(__key)
         if key not in self.data:
-            if isinstance(__default,type(...)):
+            if isinstance(__default,Ellipsis):
                 raise ValueError(f'{__key} not in dict!!')
             return __default
         else:
@@ -51,7 +51,7 @@ class HessianDict(MutableMapping[_KT,_VT], Generic[_KT,_VT]):
     def pop(self, __key: _KT, __default: _VT | _T=...)-> _VT | _T:
         key = hashable(__key)
         if key not in self.data:
-            if isinstance(__default,type(...)):
+            if isinstance(__default,Ellipsis):
                 raise ValueError(f'{__key} not in dict!!')
             return __default
         else:
@@ -83,7 +83,13 @@ class HessianDict(MutableMapping[_KT,_VT], Generic[_KT,_VT]):
 
     def __iter__(self) -> Iterator[_KT]:
         for key in self.key:
-            yield key
+            yield (self.key[key], self.data[key])
+    
+    def copy(self):
+        new_HD = HessianDict()
+        new_HD.data = self.data.copy()
+        new_HD.key = self.key.copy()
+        return new_HD
 
     def update(self, other=(), /, **kwds):
         if isinstance(other, HessianDict):
@@ -115,7 +121,7 @@ class HessianDict(MutableMapping[_KT,_VT], Generic[_KT,_VT]):
         k,v = self.key.values(), self.data.values()
         for a,b in zip(k,v):
             if id(b)==id(self):
-                re.append(f'{str2re(a)}'+':{...}')
+                re.append(f'{str2re(a)}'+': {...}')
             else:
-                re.append(f'{str2re(a)}:{str2re(b)}')
-        return '{'+','.join(re)+'}'
+                re.append(f'{str2re(a)}: {str2re(b)}')
+        return '{'+', '.join(re)+'}'

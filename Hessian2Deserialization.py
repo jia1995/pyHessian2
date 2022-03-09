@@ -167,21 +167,18 @@ class Deserialization2Hessian:
 
     def __readString__(self, length:int):
         re = ''
+        bstr = self.pos
         for _ in range(length):
             start = self.bstr[self.pos]
             if start - 0x80<0:
-                cur=self.bstr[self.pos:self.pos+1]
                 self.pos+=1
             elif start&0xe0 == 0xc0:
-                cur=self.bstr[self.pos:self.pos+2]
                 self.pos+=2
             elif start&0xf0 == 0xe0:
-                cur= self.bstr[self.pos:self.pos+3]
                 self.pos+=3
             elif start&0xf8 == 0xf0:
-                cur=self.bstr[self.pos:self.pos+4]
                 self.pos+=4
-            re+= str(cur, 'utf8')
+        re += str(self.bstr[bstr:self.pos], 'utf8')
         return re
 
     @Decode(((0x00,0x1f),(0x30,0x33),0x52,0x53))

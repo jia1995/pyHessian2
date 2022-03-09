@@ -41,7 +41,6 @@ class Deserialization2Hessian:
 
     @Decode((ord('N'),))
     def __getNull__(self, isFlag=False):
-        self.bstr[self.pos]
         self.pos+=1
         return 'None',None
     
@@ -274,7 +273,7 @@ class Deserialization2Hessian:
         classes, fields = cf['name'], cf['fields']
         rem['type']=classes
         isFlag = 'com.google.common.collect.ImmutableMap' in classes
-        if self.classes[ref]['type']==[]:
+        if not self.classes[ref]['type']:
             re1 = [DECODER[self.bstr[self.pos]](self, isFlag) for _ in fields]
             re = [i[1] for i in re1]
             self.classes[ref]['type'] = [i[0] for i in re1]

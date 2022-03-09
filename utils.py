@@ -9,10 +9,10 @@ _T = TypeVar("_T")
 def hashable(data):
     if isinstance(data, list):
         data = tuple(data)
+    elif isinstance(data, HessianDict):
+        data = dumps(data.data)
     elif isinstance(data, dict):
         data = dumps(data)
-    elif isinstance(data, HessianDict):
-        data = str(data.data)
     return hash(data)
 
 def str2re(a):
@@ -33,12 +33,12 @@ class HessianDict(MutableMapping[_KT,_VT], Generic[_KT,_VT]):
             t = hashable(k)
             self.data[t] = v
             self.key[t] = k
-        
+    
     def keys(self):
-        return self.key.values()
+        return list(self.key.values())
     
     def values(self):
-        return self.data.values()
+        return list(self.data.values())
 
     def items(self):
         return [(k,v) for k,v in zip(self.key.values(), self.data.values())]
@@ -70,7 +70,7 @@ class HessianDict(MutableMapping[_KT,_VT], Generic[_KT,_VT]):
         if key not in self.data:
             raise ValueError(f'{__k} not in dict!!')
         else:
-            return self.data[key]
+            return self.data.get(key)
     
     def __setitem__(self, __k, __v):
         k = hashable(__k)
@@ -103,11 +103,6 @@ class HessianDict(MutableMapping[_KT,_VT], Generic[_KT,_VT]):
                 self.key[k] = key
         elif isinstance(other, Mapping):
             for key in other:
-                k = hashable(key)
-                self.data[k] = other[key]
-                self.key[k] = key
-        elif hasattr(other, "keys"):
-            for key in other.keys():
                 k = hashable(key)
                 self.data[k] = other[key]
                 self.key[k] = key

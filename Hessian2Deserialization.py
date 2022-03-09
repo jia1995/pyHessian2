@@ -32,7 +32,7 @@ class Deserialization2Hessian:
             bstr = base64.b64decode(bstr)
         self.bstr = bstr
         self.len = len(bstr)
-        _, res = self.__decoder__()
+        _, res = DECODER[self.bstr[self.pos]](self)
         return res
     
     def __decoder__(self, isFlag=False):
@@ -211,36 +211,33 @@ class Deserialization2Hessian:
         return 'string', str1
 
     def __getType__(self, isFlag=False):
-        _, t = self.__decoder__()
+        _, t = DECODER[self.bstr[self.pos]](self)
         if isinstance(t, str):
             self.types.append(t)
             return t
         return self.types[t]
 
     def __generateClass__(self, classes:str, k:List[str], v:List, re:HessianDict):
-        res = re
-        dic = HessianDict()
         if 'com.google.common.collect.ImmutableMap' in classes:
             for a,b in zip(v[0], v[1]):
-                dic[a] = b
-            res.update(dic)
+                re[a] = b
+            res = re
         elif sub(r'com\.caucho\.hessian\.io\..*Handle','', classes)=='':
             for a,b in zip(k,v):
-                dic[a] = b
+                re[a] = b
             res = v[0]
         elif sub(r'java\.math\.BigDecimal','', classes)=='':
             a,b = k[0],v[0]
             if '.' in b: b = float(b)
             else: b= int(b)
-            dic[a]=b
+            re[a]=b
             res = b
         else:
             for a,b in zip(k,v):
-                dic[a] = b
-            res = dic
+                re[a] = b
+            res = re
             if len(k)==1 and k==['name']:
                 res = v[0]
-        re.update(dic)
         return res
 
     def __generateClass2__(self, classes:str, re:HessianDict):
@@ -259,7 +256,7 @@ class Deserialization2Hessian:
         self.pos+=1
         _,classes=self.__getString__()
         _,size=self.__getInt__()
-        k = [self.__decoder__()[1] for _ in range(size)]
+        k = [DECODER[self.bstr[self.pos]](self)[1] for _ in range(size)]
         self.classes.append({'name':classes, 'fields':k,'type':[]})
         _, v = self.__getObject__()
         return classes, v
@@ -281,23 +278,23 @@ class Deserialization2Hessian:
         rem['type']=classes
         isFlag = 'com.google.common.collect.ImmutableMap' in classes
         if self.classes[ref]['type']==[]:
-            re1 = [self.__decoder__(isFlag=isFlag) for _ in fields]
+            re1 = [DECODER[self.bstr[self.pos]](self, isFlag) for _ in fields]
             re = [i[1] for i in re1]
             self.classes[ref]['type'] = [i[0] for i in re1]
         else:
-            re = [self.__decoder__(isFlag=isFlag)[1] for _ in cf['type']]
+            re = [DECODER[self.bstr[self.pos]](self, isFlag)[1] for _ in cf['type']]
         return classes, self.__generateClass__(classes, fields, re, res)
     
     def __addRef__(self, obj):
         self.refMap.append(obj)
 
     def __readList__(self, length:int):
-        return [self.__decoder__()[1] for _ in range(length)]
+        return [DECODER[self.bstr[self.pos]](self)[1] for _ in range(length)]
 
     def __readUnTypedList__(self):
         re = []
         while self.bstr[self.pos]!=0x5a:
-            re.append(self.__decoder__()[1])
+            re.append(DECODER[self.bstr[self.pos]](self)[1])
         self.pos+=1
         return re
 
@@ -327,7 +324,7 @@ class Deserialization2Hessian:
     @Decode((0x51,))
     def __getRef__(self, isFlag=False):
         self.pos+=1
-        _, lens = self.__decoder__()
+        _, lens = DECODER[self.bstr[self.pos]](self)
         rem = self.refMap[lens]
         res = rem['data']
         if type(res) not in [list, tuple]:
@@ -345,8 +342,8 @@ class Deserialization2Hessian:
             _ = self.__getType__()
             self.__addRef__(rem)
         while self.bstr[self.pos]!=0x5a:
-            k = self.__decoder__()[1]
-            res[k] = self.__decoder__()[1]
+            k = DECODER[self.bstr[self.pos]](self)[1]
+            res[k] = DECODER[self.bstr[self.pos]](self)[1]
         self.pos+=1
         return 'map',res
 

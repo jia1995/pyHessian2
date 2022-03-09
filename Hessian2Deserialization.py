@@ -245,12 +245,7 @@ class Deserialization2Hessian:
 
     def __generateClass2__(self, classes:str, re:HessianDict):
         v = list(re.values())
-        if 'com.google.common.collect.ImmutableMap' in classes:
-            dic = HessianDict()
-            for a,b in zip(v[0], v[1]):
-                dic[a] = b
-            return dic
-        elif sub(r'com\.caucho\.hessian\.io\..*Handle','', classes)=='':
+        if sub(r'com\.caucho\.hessian\.io\..*Handle','', classes)=='':
             return v[0]
         elif sub(r'java.math.BigDecimal','', classes)=='':
             b = v[0]

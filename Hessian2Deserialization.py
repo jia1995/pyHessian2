@@ -1,4 +1,5 @@
 import base64
+from functools import wraps
 from re import sub
 from struct import unpack
 from types import FunctionType
@@ -7,7 +8,6 @@ from utils import HessianDict
 from datetime import datetime
 
 DECODER = [None]*256
-
 def Decode(codes:Tuple[Tuple,...]):
     def register(f:FunctionType):
         for code in codes:
@@ -25,7 +25,7 @@ class Deserialization2Hessian:
         self.refMap = []
         self.classes = []
         self.pos = 0
-
+        
     def decoder(self, bstr:str):
         assert isinstance(bstr, str) or isinstance(bstr, bytes), f"The Type {type(bstr)} is illegal!!!"
         if isinstance(bstr, str):
@@ -112,7 +112,7 @@ class Deserialization2Hessian:
             res = self.bstr[self.pos:self.pos+8]
             self.pos+=8
             return 'double',float(unpack('>d', res)[0])
-
+    
     @Decode((0x4a, 0x4b))
     def __getDate__(self, isFlag=False):
         code = self.bstr[self.pos]
@@ -199,7 +199,7 @@ class Deserialization2Hessian:
         while not self.isLastChunk:
             str1 += self.__getString__()[1]
         return 'string', str1
-
+    
     def __getType__(self, isFlag=False):
         _, t = DECODER[self.bstr[self.pos]](self)
         if isinstance(t, int): return self.types[t]
@@ -210,30 +210,30 @@ class Deserialization2Hessian:
         if 'com.google.common.collect.ImmutableMap' in classes:
             for a,b in zip(v[0], v[1]):
                 re[a] = b
-            res = re
+            return re
         elif sub(r'com\.caucho\.hessian\.io\..*Handle','', classes)=='':
             for a,b in zip(k,v):
                 re[a] = b
-            res = v[0]
+            return v[0]
         elif sub(r'java\.math\.BigDecimal','', classes)=='':
-            a,b = k[0],v[0]
+            b = v[0]
             if '.' in b: b = float(b)
             else: b= int(b)
-            re[a]=b
-            res = b
+            re[k[0]]=b
+            return b
         else:
+            if len(k)==1 and k==['name']:
+                re[k[0]] = v[0]
+                return v[0]
             for a,b in zip(k,v):
                 re[a] = b
-            res = re
-            if len(k)==1 and k==['name']:
-                res = v[0]
-        return res
+            return re
 
     def __generateClass2__(self, classes:str, re:HessianDict):
         v = list(re.values())
         if sub(r'com\.caucho\.hessian\.io\..*Handle','', classes)=='':
             return v[0]
-        elif sub(r'java.math.BigDecimal','', classes)=='':
+        elif sub(r'java\.math\.BigDecimal','', classes)=='':
             b = v[0]
             if '.' in b: return float(b)
             else: return int(b)
@@ -276,7 +276,7 @@ class Deserialization2Hessian:
         else:
             re = [DECODER[self.bstr[self.pos]](self, isFlag)[1] for _ in fields]
         return classes, self.__generateClass__(classes, fields, re, res)
-
+    
     def __readList__(self, length:int):
         return [DECODER[self.bstr[self.pos]](self)[1] for _ in range(length)]
 
@@ -286,7 +286,7 @@ class Deserialization2Hessian:
             re.append(DECODER[self.bstr[self.pos]](self)[1])
         self.pos+=1
         return re
-
+    
     @Decode(((0x55, 0x58),(0x70, 0x7f)))
     def __getList__(self, isFlag=False):
         code = self.bstr[self.pos]
@@ -297,7 +297,7 @@ class Deserialization2Hessian:
         if not isFlag:
             self.refMap.append(rem)
         if code==0x55 or code==0x56 or 0x70 <= code<=0x77:
-            _ = self.__getType__()
+            rem['type'] = self.__getType__()
         if code==0x56 or code==0x58:
             _,length = self.__getInt__()
         elif 0x70 <= code<=0x77:
@@ -316,9 +316,10 @@ class Deserialization2Hessian:
         _, lens = DECODER[self.bstr[self.pos]](self)
         rem = self.refMap[lens]
         res = rem['data']
-        if type(res) not in [list, tuple]:
-            res = self.__generateClass2__(rem['type'], res)
-        return rem['type'],res
+        types = rem['type']
+        if not isinstance(res, (list, tuple)):
+            res = self.__generateClass2__(types, res)
+        return types,res
 
     @Decode((0x48, 0x4d))
     def __getMap__(self, isFlag=False):

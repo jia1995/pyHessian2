@@ -35,10 +35,6 @@ class Deserialization2Hessian:
         _, res = DECODER[self.bstr[self.pos]](self)
         return res
     
-    def __decoder__(self, isFlag=False):
-        assert self.pos < self.len 
-        return DECODER[self.bstr[self.pos]](self, isFlag)
-
     @Decode((ord('N'),))
     def __getNull__(self, isFlag=False):
         self.pos+=1
@@ -165,7 +161,6 @@ class Deserialization2Hessian:
         return 'byte',bufs
 
     def __readString__(self, length:int):
-        re = ''
         bstr = self.pos
         for _ in range(length):
             start = self.bstr[self.pos]
@@ -177,8 +172,7 @@ class Deserialization2Hessian:
                 self.pos+=3
             elif start&0xf8 == 0xf0:
                 self.pos+=4
-        re += str(self.bstr[bstr:self.pos], 'utf8')
-        return re
+        return str(self.bstr[bstr:self.pos], 'utf8')
 
     @Decode(((0x00,0x1f),(0x30,0x33),0x52,0x53))
     def __getString__(self, isFlag=False):
@@ -208,11 +202,10 @@ class Deserialization2Hessian:
 
     def __getType__(self, isFlag=False):
         _, t = DECODER[self.bstr[self.pos]](self)
-        if isinstance(t, str):
-            self.types.append(t)
-            return t
-        return self.types[t]
-
+        if isinstance(t, int): return self.types[t]
+        self.types.append(t)
+        return t
+    
     def __generateClass__(self, classes:str, k:List[str], v:List, re:HessianDict):
         if 'com.google.common.collect.ImmutableMap' in classes:
             for a,b in zip(v[0], v[1]):
@@ -245,6 +238,9 @@ class Deserialization2Hessian:
             if '.' in b: return float(b)
             else: return int(b)
         else:
+            k = list(re.keys())
+            if len(k)==1 and k==['name']:
+                return v[0]
             return re
     
     @Decode((0x43,))
@@ -263,11 +259,11 @@ class Deserialization2Hessian:
         self.pos+=1
         res = HessianDict()
         rem = {'data':res,'type':''}
-        self.__addRef__(rem)
+        self.refMap.append(rem)
         if code==0x4f:
             ref = self.bstr[self.pos]-0x90
             self.pos+=1
-        elif code>=0x60 and code<=0x6f:
+        elif 0x60<=code<=0x6f:
             ref = code-0x60
         cf = self.classes[ref]
         classes, fields = cf['name'], cf['fields']
@@ -278,11 +274,8 @@ class Deserialization2Hessian:
             re = [i[1] for i in re1]
             self.classes[ref]['type'] = [i[0] for i in re1]
         else:
-            re = [DECODER[self.bstr[self.pos]](self, isFlag)[1] for _ in cf['type']]
+            re = [DECODER[self.bstr[self.pos]](self, isFlag)[1] for _ in fields]
         return classes, self.__generateClass__(classes, fields, re, res)
-    
-    def __addRef__(self, obj):
-        self.refMap.append(obj)
 
     def __readList__(self, length:int):
         return [DECODER[self.bstr[self.pos]](self)[1] for _ in range(length)]
@@ -302,7 +295,7 @@ class Deserialization2Hessian:
         re = []
         rem = {'data':re, 'type':'list'}
         if not isFlag:
-            self.__addRef__(rem)
+            self.refMap.append(rem)
         if code==0x55 or code==0x56 or 0x70 <= code<=0x77:
             _ = self.__getType__()
         if code==0x56 or code==0x58:
@@ -333,10 +326,10 @@ class Deserialization2Hessian:
         self.pos+=1
         res = HessianDict()
         rem = {'data':res, 'type':'map'}
-        self.__addRef__(rem)
+        self.refMap.append(rem)
         if code == 0x4d: # map with type ('M')
-            _ = self.__getType__()
-            self.__addRef__(rem)
+            rem['type'] = self.__getType__()
+            self.refMap.append(rem)
         while self.bstr[self.pos]!=0x5a:
             k = DECODER[self.bstr[self.pos]](self)[1]
             res[k] = DECODER[self.bstr[self.pos]](self)[1]

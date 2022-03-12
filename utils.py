@@ -1,22 +1,24 @@
 from __future__ import annotations
 
-from typing import Mapping, overload,MutableMapping,Generic, TypeVar, Iterator
+from typing import Mapping,MutableMapping,Generic, TypeVar, Iterator
 from json import dumps
 _KT = TypeVar("_KT")
 _VT = TypeVar("_VT")
 _T = TypeVar("_T")
 
 def hashable(data):
-    if isinstance(data, list):
-        data = tuple(data)
-    elif isinstance(data, HessianDict):
-        data = dumps(data.data)
-    elif isinstance(data, dict):
-        data = dumps(data)
-    return hash(data)
+    dclass = data.__class__
+    if dclass not in (list, dict, HessianDict):
+        return hash(dclass)
+    if dclass == list:
+        return hash(tuple(data))
+    elif dclass == HessianDict:
+        return hash(dumps(data.data))
+    elif dclass == dict:
+        return hash(dumps(data))
 
 def str2re(a):
-    if isinstance(a, str):
+    if a.__class__ == str:
         return f'"{a}"'
     else:
         return f'{a}'
@@ -25,14 +27,11 @@ class HessianDict(MutableMapping[_KT,_VT], Generic[_KT,_VT]):
     def __init__(self, **kargs):
         self.data = {}
         self.key = {}
-        if isinstance(kargs, dict):
-            kargs = kargs.items()
-        elif isinstance(kargs, list):
-            kargs = zip(kargs[0], kargs[1])
-        for k,v in kargs:
-            t = hashable(k)
-            self.data[t] = v
-            self.key[t] = k
+        if kargs:
+            for k,v in kargs.items():
+                t = hashable(k)
+                self.data[t] = v
+                self.key[t] = k
     
     def keys(self):
         return list(self.key.values())
@@ -46,7 +45,7 @@ class HessianDict(MutableMapping[_KT,_VT], Generic[_KT,_VT]):
     def get(self, __key: _KT, __default: _VT | _T=...)-> _VT | _T:
         key = hashable(__key)
         if key not in self.data:
-            if isinstance(__default,Ellipsis):
+            if __default.__class__ == Ellipsis:
                 raise ValueError(f'{__key} not in dict!!')
             return __default
         else:
@@ -55,7 +54,7 @@ class HessianDict(MutableMapping[_KT,_VT], Generic[_KT,_VT]):
     def pop(self, __key: _KT, __default: _VT | _T=...)-> _VT | _T:
         key = hashable(__key)
         if key not in self.data:
-            if isinstance(__default,Ellipsis):
+            if __default.__class__ == Ellipsis:
                 raise ValueError(f'{__key} not in dict!!')
             return __default
         else:
@@ -96,12 +95,12 @@ class HessianDict(MutableMapping[_KT,_VT], Generic[_KT,_VT]):
         return new_HD
 
     def update(self, other=(), /, **kwds):
-        if isinstance(other, HessianDict):
+        if other.__class__ == HessianDict:
             for key, value in other.items():
                 k = hashable(key)
                 self.data[k] = value
                 self.key[k] = key
-        elif isinstance(other, Mapping):
+        elif other.__class__ == Mapping:
             for key in other:
                 k = hashable(key)
                 self.data[k] = other[key]

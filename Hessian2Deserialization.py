@@ -1,5 +1,4 @@
 import base64
-from functools import wraps
 from re import sub
 from struct import unpack
 from types import FunctionType
@@ -13,7 +12,7 @@ def Decode(codes:Tuple[Tuple,...]):
         for code in codes:
             if type(code) == int:
                 DECODER[code] = f
-            elif isinstance(code, tuple) and len(code) == 2:
+            elif code.__class__ == tuple and len(code) == 2:
                 for i in range(code[0], code[1]+1):
                     DECODER[i] = f
         return f
@@ -27,11 +26,10 @@ class Deserialization2Hessian:
         self.pos = 0
         
     def decoder(self, bstr:str):
-        assert isinstance(bstr, str) or isinstance(bstr, bytes), f"The Type {type(bstr)} is illegal!!!"
-        if isinstance(bstr, str):
+        assert bstr.__class__ in (str, bytes), f"The Type {type(bstr)} is illegal!!!"
+        if bstr.__class__ == str:
             bstr = base64.b64decode(bstr)
         self.bstr = bstr
-        self.len = len(bstr)
         _, res = DECODER[self.bstr[self.pos]](self)
         return res
     
@@ -202,7 +200,7 @@ class Deserialization2Hessian:
     
     def __getType__(self, isFlag=False):
         _, t = DECODER[self.bstr[self.pos]](self)
-        if isinstance(t, int): return self.types[t]
+        if t.__class__ == int: return self.types[t]
         self.types.append(t)
         return t
     
@@ -263,7 +261,7 @@ class Deserialization2Hessian:
         if code==0x4f:
             ref = self.bstr[self.pos]-0x90
             self.pos+=1
-        elif 0x60<=code<=0x6f:
+        else:
             ref = code-0x60
         cf = self.classes[ref]
         classes, fields = cf['name'], cf['fields']
@@ -302,7 +300,7 @@ class Deserialization2Hessian:
             _,length = self.__getInt__()
         elif 0x70 <= code<=0x77:
             length = code-0x70
-        elif 0x78 <= code<=0x7f:
+        else:
             length = code-0x78
         if code==0x57 or code==0x55:
             re.extend(self.__readUnTypedList__())
@@ -317,7 +315,7 @@ class Deserialization2Hessian:
         rem = self.refMap[lens]
         res = rem['data']
         types = rem['type']
-        if not isinstance(res, (list, tuple)):
+        if not res.__class__ in (list, tuple):
             res = self.__generateClass2__(types, res)
         return types,res
 

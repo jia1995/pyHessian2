@@ -18,6 +18,20 @@ def Decode(codes:Tuple[Tuple,...]):
         return f
     return register
 
+KX = []
+for start in range(0x00, 0xff):
+    if start < 0x80:
+        KX.append(1)
+    elif 0xc0<=start <=0xdf:
+        KX.append(2)
+    elif 0xe0<=start<=0xef:
+        KX.append(3)
+    elif 0xf0<=start<= 0xf7:
+        KX.append(4)
+    else:
+        KX.append(0)
+
+
 class Deserialization2Hessian:
     def __init__(self):
         self.types = []
@@ -161,15 +175,7 @@ class Deserialization2Hessian:
     def __readString__(self, length:int):
         bstr = self.pos
         for _ in range(length):
-            start = self.bstr[self.pos]
-            if start - 0x80<0:
-                self.pos+=1
-            elif start&0xe0 == 0xc0:
-                self.pos+=2
-            elif start&0xf0 == 0xe0:
-                self.pos+=3
-            elif start&0xf8 == 0xf0:
-                self.pos+=4
+            self.pos+=KX[self.bstr[self.pos]]
         return str(self.bstr[bstr:self.pos], 'utf8')
 
     @Decode(((0x00,0x1f),(0x30,0x33),0x52,0x53))

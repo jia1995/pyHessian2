@@ -6,7 +6,7 @@ _KT = TypeVar("_KT")
 _VT = TypeVar("_VT")
 _T = TypeVar("_T")
 
-def hashable(data):
+def hashable(data:_T) -> int:
     dclass = data.__class__
     if dclass not in (list, dict, HessianDict):
         return hash(dclass)
@@ -14,10 +14,9 @@ def hashable(data):
         return hash(tuple(data))
     elif dclass == HessianDict:
         return hash(dumps(data.data))
-    elif dclass == dict:
-        return hash(dumps(data))
+    return hash(dumps(data))
 
-def str2re(a):
+def str2re(a:_T) -> str:
     if a.__class__ == str:
         return f'"{a}"'
     else:
@@ -33,13 +32,13 @@ class HessianDict(MutableMapping[_KT,_VT], Generic[_KT,_VT]):
                 self.data[t] = v
                 self.key[t] = k
     
-    def keys(self):
+    def keys(self) -> None:
         return list(self.key.values())
     
-    def values(self):
+    def values(self) -> None:
         return list(self.data.values())
 
-    def items(self):
+    def items(self) -> None:
         return [(k,v) for k,v in zip(self.key.values(), self.data.values())]
     
     def get(self, __key: _KT, __default: _VT | _T=...)-> _VT | _T:
@@ -61,22 +60,22 @@ class HessianDict(MutableMapping[_KT,_VT], Generic[_KT,_VT]):
             self.key.pop(key)
             return self.data.pop(key)
     
-    def __len__(self):
+    def __len__(self) -> None:
         return len(self.data)
     
-    def __getitem__(self, __k):
+    def __getitem__(self, __k:_KT) -> _VT:
         key = hashable(__k)
         if key not in self.data:
             raise ValueError(f'{__k} not in dict!!')
         else:
             return self.data.get(key)
     
-    def __setitem__(self, __k, __v):
+    def __setitem__(self, __k: _KT, __v:_VT) -> None:
         k = hashable(__k)
         self.data[k] = __v
         self.key[k] = __k
     
-    def __delitem__(self, __k):
+    def __delitem__(self, __k: _KT) -> None:
         key = hashable(__k)
         if key not in self.data:
             raise ValueError(f'{__k} not in dict!!')
@@ -88,13 +87,13 @@ class HessianDict(MutableMapping[_KT,_VT], Generic[_KT,_VT]):
         for key in self.key:
             yield (self.key[key], self.data[key])
     
-    def copy(self):
+    def copy(self) -> HessianDict:
         new_HD = HessianDict()
         new_HD.data = self.data.copy()
         new_HD.key = self.key.copy()
         return new_HD
 
-    def update(self, other=(), /, **kwds):
+    def update(self, other=(), /, **kwds) -> None:
         if other.__class__ == HessianDict:
             for key, value in other.items():
                 k = hashable(key)
@@ -114,7 +113,8 @@ class HessianDict(MutableMapping[_KT,_VT], Generic[_KT,_VT]):
             k = hashable(key)
             self.data[k] = value
             self.key[k] = key
-    def __repr__(self):
+
+    def __repr__(self) -> str:
         re = []
         k,v = self.key.values(), self.data.values()
         for a,b in zip(k,v):

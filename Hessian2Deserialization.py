@@ -1,5 +1,4 @@
 import base64
-from re import sub
 from struct import unpack
 from types import FunctionType
 from typing import Dict, List, Tuple
@@ -172,12 +171,6 @@ class Deserialization2Hessian:
         self.pos+=length
         return 'byte',bufs
 
-    def __readString__(self, length:int):
-        bstr = self.pos
-        for _ in range(length):
-            self.pos+=KX[self.bstr[self.pos]]
-        return str(self.bstr[bstr:self.pos], 'utf8')
-
     @Decode(((0x00,0x1f),(0x30,0x33),0x52,0x53))
     def __getString__(self, isFlag=False):
         str1 = ''
@@ -199,7 +192,11 @@ class Deserialization2Hessian:
             res = self.bstr[self.pos:self.pos+2]
             self.pos+=2
             length = int.from_bytes(res, byteorder='big')
-        str1 += self.__readString__(length)
+
+        bstr = self.pos
+        for _ in range(length):
+            self.pos+=KX[self.bstr[self.pos]]
+        str1 += str(self.bstr[bstr:self.pos], 'utf8')
         while not self.isLastChunk:
             str1 += self.__getString__()[1]
         return 'string', str1
@@ -209,35 +206,12 @@ class Deserialization2Hessian:
         if t.__class__ == int: return self.types[t]
         self.types.append(t)
         return t
-    
-    def __generateClass__(self, classes:str, k:List[str], v:List, re:HessianDict):
-        if 'com.google.common.collect.ImmutableMap' in classes:
-            for a,b in zip(v[0], v[1]):
-                re[a] = b
-            return re
-        elif sub(r'com\.caucho\.hessian\.io\..*Handle','', classes)=='':
-            for a,b in zip(k,v):
-                re[a] = b
-            return v[0]
-        elif sub(r'java\.math\.BigDecimal','', classes)=='':
-            b = v[0]
-            if '.' in b: b = float(b)
-            else: b= int(b)
-            re[k[0]]=b
-            return b
-        else:
-            if len(k)==1 and k==['name']:
-                re[k[0]] = v[0]
-                return v[0]
-            for a,b in zip(k,v):
-                re[a] = b
-            return re
 
     def __generateClass2__(self, classes:str, re:HessianDict):
         v = list(re.values())
-        if sub(r'com\.caucho\.hessian\.io\..*Handle','', classes)=='':
+        if classes.endswith('Handle'):
             return v[0]
-        elif sub(r'java\.math\.BigDecimal','', classes)=='':
+        elif classes == 'java.math.BigDecimal':
             b = v[0]
             if '.' in b: return float(b)
             else: return int(b)
@@ -279,7 +253,28 @@ class Deserialization2Hessian:
             self.classes[ref]['type'] = [i[0] for i in re1]
         else:
             re = [DECODER[self.bstr[self.pos]](self, isFlag)[1] for _ in fields]
-        return classes, self.__generateClass__(classes, fields, re, res)
+        
+        if isFlag:
+            for a,b in zip(*re):
+                res[a] = b
+            return classes,res
+        elif classes.endswith('Handle'):
+            for a,b in zip(fields,re):
+                res[a] = b
+            return classes, re[0]
+        elif classes == 'java.math.BigDecimal':
+            b = re[0]
+            if '.' in b: b = float(b)
+            else: b= int(b)
+            res[fields[0]]=b
+            return classes,b
+        else:
+            if len(fields)==1 and fields==['name']:
+                res[fields[0]] = re[0]
+                return classes,re[0]
+            for a,b in zip(fields,re):
+                res[a] = b
+            return classes,res
     
     def __readList__(self, length:int):
         return [DECODER[self.bstr[self.pos]](self)[1] for _ in range(length)]

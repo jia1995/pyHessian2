@@ -19,8 +19,9 @@ def hashable(data:_T) -> int:
 def str2re(a:_T) -> str:
     if a.__class__ == str:
         return f'"{a}"'
-    else:
+    elif a.__class__==HessianDict:
         return f'{a}'
+    return dumps(a)
 
 class HessianDict(MutableMapping[_KT,_VT], Generic[_KT,_VT]):
     def __init__(self, **kargs):

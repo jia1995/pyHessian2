@@ -9,7 +9,7 @@ _T = TypeVar("_T")
 def hashable(data:_T) -> int:
     dclass = data.__class__
     if dclass not in (list, dict, HessianDict):
-        return hash(dclass)
+        return hash(data)
     if dclass == list:
         return hash(tuple(data))
     elif dclass == HessianDict:
